@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECL Academy | Ecommerce Logistics LLC - Tu Puerta al Mercado de EE.UU.</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>ECL <strong>Academy</strong></span>
+            </div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#cursos">Cursos</a></li>
+                <li><a href="#cursos">Beneficios</a></li>
+                <li><a href="#testimonios">Testimonios</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="btn-cart" id="cartBtn" aria-label="Carrito de compras">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </button>
+                <button class="btn-primary btn-sm">Inscríbete</button>
+            </div>
+            <button class="mobile-toggle" id="mobileToggle" aria-label="Menú">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="inicio">
+        <div class="hero-bg"></div>
+        <div class="container hero-content">
+            <h1>Lleva tu Negocio de <span class="gradient-text">Latinoamérica</span> al Mercado de <span class="gradient-text">Estados Unidos</span></h1>
+            <p class="hero-subtitle">Talleres especializados para sellers de Amazon que quieren expandirse al mercado más grande del mundo. Aprende cumplimiento aduanero, FDA, USDA, logística internacional y más.</p>
+            <div class="hero-cta">
+                <a href="#cursos" class="btn-primary btn-lg">Explorar Cursos <i class="fas fa-arrow-right"></i></a>
+                <a href="#beneficios" class="btn-outline btn-lg">Conoce Más</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-number">500+</span>
+                    <span class="stat-label">Sellers Capacitados</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">12</span>
+                    <span class="stat-label">Países LATAM</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">95%</span>
+                    <span class="stat-label">Tasa de Éxito</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beneficios Section -->
+    <!-- Cursos Section -->
+    <section class="courses" id="cursos">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">¿Por qué ECL Academy?</span>
+                <h2>Todo lo que Necesitas para Vender en Amazon USA</h2>
+                <p>Nuestros programas están diseñados por expertos en comercio internacional con años de experiencia ayudando a sellers latinoamericanos.</p>
+            </div>
+            <div class="courses-grid">
+                <!-- Curso 1 -->
+                <div class="course-card" data-course-id="1">
+                    <div class="course-badge bestseller">Más Vendido</div>
+                    <div class="course-image">
+                        <i class="fas fa-boxes-packing"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-category">Aduanas & Logística</div>
+                        <h3>Cumplimiento Aduanero para Amazon Sellers</h3>
+                        <p>Aprende clasificación arancelaria, documentación de importación, y cómo evitar retenciones en aduana.</p>
+                        <div class="course-meta">
+                            <span><i class="fas fa-clock"></i> 8 semanas</span>
+                            <span><i class="fas fa-video"></i> 24 lecciones</span>
+                            <span><i class="fas fa-certificate"></i> Certificado</span>
+                        </div>
+                        <div class="course-footer">
+                            <div class="course-price">
+                                <span class="price-old">$497</span>
+                                <span class="price-current">$297</span>
+                            </div>
+                            <button class="btn-add-cart" onclick="addToCart(1)">
+                                <i class="fas fa-cart-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 2 -->
+                <div class="course-card" data-course-id="2">
+                    <div class="course-image">
+                        <i class="fas fa-prescription-bottle-medical"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-category">Regulaciones</div>
+                        <h3>Regulaciones FDA: Guía Completa</h3>
+                        <p>Todo sobre registro de establecimientos, etiquetado, y cumplimiento FDA para productos regulados.</p>
+                        <div class="course-meta">
+                            <span><i class="fas fa-clock"></i> 6 semanas</span>
+                            <span><i class="fas fa-video"></i> 18 lecciones</span>
+                            <span><i class="fas fa-certificate"></i> Certificado</span>
+                        </div>
+                        <div class="course-footer">
+                            <div class="course-price">
+                                <span class="price-old">$397</span>
+                                <span class="price-current">$247</span>
+                            </div>
+                            <button class="btn-add-cart" onclick="addToCart(2)">
+                                <i class="fas fa-cart-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 3 -->
+                <div class="course-card" data-course-id="3">
+                    <div class="course-badge new">Nuevo</div>
+                    <div class="course-image">
+                        <i class="fas fa-money-bill-transfer"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-category">Finanzas</div>
+                        <h3>Gestión Fintech y Contabilidad Internacional</h3>
+                        <p>Pagos internacionales, impuestos en EE.UU., estructura corporativa y contabilidad para e-commerce.</p>
+                        <div class="course-meta">
+                            <span><i class="fas fa-clock"></i> 5 semanas</span>
+                            <span><i class="fas fa-video"></i> 15 lecciones</span>
+                            <span><i class="fas fa-certificate"></i> Certificado</span>
+                        </div>
+                        <div class="course-footer">
+                            <div class="course-price">
+                                <span class="price-old">$347</span>
+                                <span class="price-current">$197</span>
+                            </div>
+                            <button class="btn-add-cart" onclick="addToCart(3)">
+                                <i class="fas fa-cart-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 4 -->
+                <div class="course-card" data-course-id="4">
+                    <div class="course-image">
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-category">Regulaciones</div>
+                        <h3>Cumplimiento USDA para Exportadores</h3>
+                        <p>Normativas fitosanitarias, certificaciones orgánicas y requisitos para productos agrícolas.</p>
+                        <div class="course-meta">
+                            <span><i class="fas fa-clock"></i> 4 semanas</span>
+                            <span><i class="fas fa-video"></i> 12 lecciones</span>
+                            <span><i class="fas fa-certificate"></i> Certificado</span>
+                        </div>
+                        <div class="course-footer">
+                            <div class="course-price">
+                                <span class="price-old">$297</span>
+                                <span class="price-current">$197</span>
+                            </div>
+                            <button class="btn-add-cart" onclick="addToCart(4)">
+                                <i class="fas fa-cart-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 5 -->
+                <div class="course-card" data-course-id="5">
+                    <div class="course-badge popular">Popular</div>
+                    <div class="course-image">
+                        <i class="fas fa-truck-fast"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-category">Logística</div>
+                        <h3>Logística Internacional & FBA</h3>
+                        <p>Cadena de suministro, freight forwarding, FBA prep y optimización de envíos internacionales.</p>
+                        <div class="course-meta">
+                            <span><i class="fas fa-clock"></i> 7 semanas</span>
+                            <span><i class="fas fa-video"></i> 21 lecciones</span>
+                            <span><i class="fas fa-certificate"></i> Certificado</span>
+                        </div>
+                        <div class="course-footer">
+                            <div class="course-price">
+                                <span class="price-old">$447</span>
+                                <span class="price-current">$297</span>
+                            </div>
+                            <button class="btn-add-cart" onclick="addToCart(5)">
+                                <i class="fas fa-cart-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 6 -->
+                <div class="course-card" data-course-id="6">
+                    <div class="course-image">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-category">Comercio Internacional</div>
+                        <h3>Tratados de Libre Comercio & Beneficios Arancelarios</h3>
+                        <p>Aprovecha TLC, programas preferenciales y acuerdos comerciales para maximizar tu margen.</p>
+                        <div class="course-meta">
+                            <span><i class="fas fa-clock"></i> 4 semanas</span>
+                            <span><i class="fas fa-video"></i> 10 lecciones</span>
+                            <span><i class="fas fa-certificate"></i> Certificado</span>
+                        </div>
+                        <div class="course-footer">
+                            <div class="course-price">
+                                <span class="price-old">$247</span>
+                                <span class="price-current">$147</span>
+                            </div>
+                            <button class="btn-add-cart" onclick="addToCart(6)">
+                                <i class="fas fa-cart-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonios Section -->
+    <section class="testimonials" id="testimonios">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Testimonios</span>
+                <h2>Lo que Dicen Nuestros Graduados</h2>
+                <p>Sellers que ya están vendiendo exitosamente en Amazon USA gracias a nuestros programas.</p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p>"Gracias a ECL Academy logré entender todo el proceso aduanero. En 3 meses ya tenía mis productos en los warehouses de Amazon USA."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar"><i class="fas fa-user"></i></div>
+                        <div>
+                            <strong>María González</strong>
+                            <span>Seller desde Colombia</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p>"El curso de FDA fue clave para mi marca de suplementos. Sin ECL Academy, habría cometido errores costosos en el registro."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar"><i class="fas fa-user"></i></div>
+                        <div>
+                            <strong>Carlos Ramírez</strong>
+                            <span>Seller desde México</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p>"La gestión fintech me ahorró miles de dólares en comisiones. Ahora manejo mis pagos internacionales como un profesional."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar"><i class="fas fa-user"></i></div>
+                        <div>
+                            <strong>Ana Lucía Pérez</strong>
+                            <span>Seller desde Perú</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>¿Listo para Conquistar Amazon USA?</h2>
+                <p>Únete a cientos de sellers latinoamericanos que ya están generando ingresos en el mercado más grande del mundo.</p>
+                <a href="#cursos" class="btn-primary btn-lg">Comienza Hoy <i class="fas fa-rocket"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Agencia Oficial Section -->
+    <section class="agency-section">
+        <div class="container">
+            <div class="agency-content">
+                <div class="agency-logos">
+                    <div class="agency-logo-card ecl-card">
+                        <img src="logoecl.png" alt="Ecommerce Logistics LLC" class="agency-logo ecl-logo">
+                    </div>
+                    <div class="agency-logo-card">
+                        <img src="spn-logo.jpeg" alt="Amazon Seller Central Partner Network" class="agency-logo spn-logo">
+                    </div>
+                </div>
+                <div class="agency-text">
+                    <h2>Somos <span class="text-amazon">Amazon</span> Service Partner</h2>
+                    <p>Ecommerce Logistics LLC es miembro oficial del <strong>Amazon Seller Central Partner Network</strong>. Nuestra certificación garantiza que recibes formación avalada por los más altos estándares de Amazon para sellers internacionales.</p>
+                    <div class="agency-features">
+                        <div class="agency-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Certificados por Amazon</span>
+                        </div>
+                        <div class="agency-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Agencia Oficial Amazon 2026</span>
+                        </div>
+                        <div class="agency-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Soporte especializado LATAM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contacto Section -->
+    <section class="contact" id="contacto">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Contacto</span>
+                <h2>¿Tienes Preguntas?</h2>
+                <p>Nuestro equipo está listo para ayudarte a dar el primer paso.</p>
+            </div>
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <strong>Email</strong>
+                            <p>academy@ecommercelogistics.com</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <strong>Teléfono</strong>
+                            <p>+1 (305) 555-0123</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <strong>Ubicación</strong>
+                            <p>Miami, Florida, USA</p>
+                        </div>
+                    </div>
+                    <div class="contact-social">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <form class="contact-form" id="contactForm">
+                    <div class="form-group">
+                        <input type="text" placeholder="Tu nombre" required aria-label="Nombre">
+                    </div>
+                    <div class="form-group">
+                        <input type="email" placeholder="Tu email" required aria-label="Email">
+                    </div>
+                    <div class="form-group">
+                        <select required aria-label="País">
+                            <option value="">Selecciona tu país</option>
+                            <option>México</option>
+                            <option>Colombia</option>
+                            <option>Perú</option>
+                            <option>Chile</option>
+                            <option>Argentina</option>
+                            <option>Ecuador</option>
+                            <option>Brasil</option>
+                            <option>Costa Rica</option>
+                            <option>Guatemala</option>
+                            <option>Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <textarea placeholder="Tu mensaje" rows="4" required aria-label="Mensaje"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary btn-lg btn-full">Enviar Mensaje <i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>ECL <strong>Academy</strong></span>
+                    </div>
+                    <p>Ecommerce Logistics LLC - Educación especializada para sellers de Amazon en Latinoamérica que buscan expandirse al mercado de Estados Unidos.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Cursos</h4>
+                    <ul>
+                        <li><a href="#">Cumplimiento Aduanero</a></li>
+                        <li><a href="#">Regulaciones FDA</a></li>
+                        <li><a href="#">Gestión Fintech</a></li>
+                        <li><a href="#">Logística Internacional</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Recursos</h4>
+                    <ul>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Guías Gratuitas</a></li>
+                        <li><a href="#">Webinars</a></li>
+                        <li><a href="#">Comunidad</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Términos de Uso</a></li>
+                        <li><a href="#">Política de Privacidad</a></li>
+                        <li><a href="#">Reembolsos</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Ecommerce Logistics LLC. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Shopping Cart Modal -->
+    <div class="cart-overlay" id="cartOverlay"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3><i class="fas fa-shopping-cart"></i> Tu Carrito</h3>
+            <button class="cart-close" id="cartClose" aria-label="Cerrar carrito"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="cart-empty">
+                <i class="fas fa-shopping-bag"></i>
+                <p>Tu carrito está vacío</p>
+            </div>
+        </div>
+        <div class="cart-footer" id="cartFooter" style="display:none;">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotal">$0</span>
+            </div>
+            <button class="btn-primary btn-lg btn-full" onclick="checkout()">
+                Proceder al Pago <i class="fas fa-lock"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
