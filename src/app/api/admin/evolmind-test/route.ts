@@ -1,24 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { enrollStudent, isEvolmindConfigured } from "@/lib/evolmind";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 /**
  * POST /api/admin/evolmind-test
  * Prueba una matrícula real contra Evolmind sin pasar por un pago.
- * Útil al configurar las credenciales de evolCampus.
- *
- * Protegido con ADMIN_TOKEN.
- * Body: { email, name, evolmindCourseId }
+ * Protegido con ADMIN_TOKEN (header Bearer o cookie de sesión admin).
+ * Body: { email, name, groupid }
  */
 export async function POST(req: NextRequest) {
-  const adminToken = process.env.ADMIN_TOKEN;
-  if (!adminToken) {
-    return NextResponse.json(
-      { error: "ADMIN_TOKEN no configurado" },
-      { status: 503 }
-    );
-  }
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${adminToken}`) {
+  if (!isAdminRequest(req)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

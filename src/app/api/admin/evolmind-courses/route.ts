@@ -4,6 +4,7 @@ import {
   getEvolmindCourseGroups,
   isEvolmindConfigured,
 } from "@/lib/evolmind";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 /**
  * GET /api/admin/evolmind-courses
@@ -14,14 +15,7 @@ import {
  * Protegido con ADMIN_TOKEN.
  */
 export async function GET(req: NextRequest) {
-  const adminToken = process.env.ADMIN_TOKEN;
-  if (!adminToken) {
-    return NextResponse.json(
-      { error: "ADMIN_TOKEN no configurado" },
-      { status: 503 }
-    );
-  }
-  if (req.headers.get("authorization") !== `Bearer ${adminToken}`) {
+  if (!isAdminRequest(req)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

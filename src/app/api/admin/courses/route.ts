@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncCoursesFromEvolmind } from "@/lib/courses-sync";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 /**
  * Gestión de cursos. evolCampus es la fuente de verdad del catálogo.
- * Protegido con ADMIN_TOKEN.
+ * Protegido con ADMIN_TOKEN (header Bearer o cookie de sesión admin).
  *
  * GET   /api/admin/courses  -> lista los cursos locales con su estado
  * POST  /api/admin/courses  -> sincroniza el catálogo desde evolCampus
@@ -12,14 +13,7 @@ import { syncCoursesFromEvolmind } from "@/lib/courses-sync";
  */
 
 function authorize(req: NextRequest): NextResponse | null {
-  const adminToken = process.env.ADMIN_TOKEN;
-  if (!adminToken) {
-    return NextResponse.json(
-      { error: "ADMIN_TOKEN no configurado" },
-      { status: 503 }
-    );
-  }
-  if (req.headers.get("authorization") !== `Bearer ${adminToken}`) {
+  if (!isAdminRequest(req)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
   return null;

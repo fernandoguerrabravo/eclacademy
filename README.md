@@ -182,13 +182,27 @@ catálogo local es un espejo que añade solo lo que evolCampus no tiene:
 | POST | `/api/admin/evolmind-test` | Prueba una matrícula real sin pago |
 | POST | `/api/admin/sync-enrollments` | Reintenta matrículas no sincronizadas |
 
-Flujo típico:
+## Panel de administración (UI)
+
+Interfaz web en **`/admin`** para gestionar el catálogo sin usar `curl`.
+
+- **Login**: `/admin/login` — introduce el `ADMIN_TOKEN`. Se guarda en una cookie
+  httpOnly de sesión (8 h). Las rutas admin aceptan la cookie o el header Bearer.
+- **Panel** (`/admin`):
+  - Botón **Sincronizar desde evolCampus** (trae/actualiza el catálogo)
+  - Tabla de cursos: estado de enlace, edición de **precio** y **precio anterior**,
+    interruptor **Publicado/Oculto** (deshabilitado si el curso no está enlazado)
+  - Botón **Reintentar matrículas** pendientes de sincronizar
+  - Cerrar sesión
+
+Los endpoints siguen disponibles por API (header `Authorization: Bearer $ADMIN_TOKEN`)
+para automatización:
 
 ```bash
-# 1. Sincronizar el catálogo desde evolCampus
+# Sincronizar catálogo
 curl -X POST /api/admin/courses -H "Authorization: Bearer $ADMIN_TOKEN"
 
-# 2. Fijar precio y publicar un curso (p.ej. id 2)
+# Fijar precio y publicar (p.ej. curso id 2)
 curl -X PATCH /api/admin/courses -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"courseId":2,"price":247,"originalPrice":397,"published":true}'

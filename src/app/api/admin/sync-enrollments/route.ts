@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { retryPendingEnrollments } from "@/lib/enrollments";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 /**
  * POST /api/admin/sync-enrollments
  * Reintenta sincronizar con Evolmind las matrículas pendientes.
- * Protegido con ADMIN_TOKEN (header: Authorization: Bearer <token>).
+ * Protegido con ADMIN_TOKEN (header Bearer o cookie de sesión admin).
  */
 export async function POST(req: NextRequest) {
-  const adminToken = process.env.ADMIN_TOKEN;
-  if (!adminToken) {
-    return NextResponse.json(
-      { error: "ADMIN_TOKEN no configurado" },
-      { status: 503 }
-    );
-  }
-
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${adminToken}`) {
+  if (!isAdminRequest(req)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
