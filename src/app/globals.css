@@ -2158,3 +2158,50 @@ body {
   font-size: 0.85rem;
   cursor: pointer;
 }
+
+/* ===== ADMIN SHELL (layout separado) ===== */
+.admin-shell {
+  min-height: 100vh;
+  background: var(--gray-100);
+}
+
+.admin-header {
+  background: var(--amazon-darker);
+  color: var(--white);
+  border-bottom: 3px solid var(--amazon-orange);
+}
+
+.admin-header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--white);
+  text-decoration: none;
+  font-size: 1.1rem;
+}
+
+.admin-brand i {
+  color: var(--amazon-orange);
+}
+
+.admin-header-link {
+  color: var(--gray-300);
+  text-decoration: none;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-header-link:hover {
+  color: var(--amazon-orange);
+}

@@ -1,8 +1,4 @@
 import type { Metadata } from "next";
-import { CartProvider } from "@/context/CartContext";
-import { AuthProvider } from "@/context/AuthContext";
-import { Navbar } from "@/components/Navbar";
-import { CartSidebar } from "@/components/CartSidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,15 +24,7 @@ export default function RootLayout({
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
       </head>
-      <body>
-        <AuthProvider>
-          <CartProvider>
-            <Navbar />
-            {children}
-            <CartSidebar />
-          </CartProvider>
-        </AuthProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
