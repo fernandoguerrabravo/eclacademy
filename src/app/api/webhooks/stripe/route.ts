@@ -6,7 +6,7 @@ import {
   cancelEnrollmentsForOrder,
 } from "@/lib/enrollments";
 import { findOrCreateUser, createMagicToken } from "@/lib/auth";
-import { sendEmail, magicLinkEmail } from "@/lib/email";
+import { sendEmail, enrollmentEmail, refundEmail } from "@/lib/email";
 import type Stripe from "stripe";
 
 /**
@@ -126,7 +126,7 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
   await sendAccessEmail(user.id, buyerEmail, user.name, courseTitles);
 }
 
-/** Envía el email con el enlace de acceso sin contraseña. */
+/** Envía el email de matrícula confirmada con instrucciones de acceso. */
 async function sendAccessEmail(
   userId: string,
   email: string,
@@ -137,8 +137,8 @@ async function sendAccessEmail(
     const token = await createMagicToken(userId);
     const siteUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const url = `${siteUrl}/api/auth/magic?token=${encodeURIComponent(token)}`;
-    const { subject, html } = magicLinkEmail({ name, url, courses });
+    const accessUrl = `${siteUrl}/api/auth/magic?token=${encodeURIComponent(token)}`;
+    const { subject, html } = enrollmentEmail({ name, courses, accessUrl });
     await sendEmail({ to: email, subject, html });
   } catch (err) {
     console.error("[webhook] No se pudo enviar el email de acceso:", err);
@@ -187,5 +187,24 @@ async function handleRefund(charge: Stripe.Charge) {
     data: { status: "REFUNDED" },
   });
   await cancelEnrollmentsForOrder(order.id);
+
+  // Email de confirmación de reembolso
+  try {
+    const full = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: { items: true, user: true },
+    });
+    if (full) {
+      const { subject, html } = refundEmail({
+        name: full.user?.name || "estudiante",
+        courses: full.items.map((i) => i.title),
+        amount: full.total,
+      });
+      await sendEmail({ to: full.email, subject, html });
+    }
+  } catch (err) {
+    console.error("[webhook] No se pudo enviar el email de reembolso:", err);
+  }
+
   console.log(`[webhook] Orden ${order.id} reembolsada y matrículas dadas de baja`);
 }

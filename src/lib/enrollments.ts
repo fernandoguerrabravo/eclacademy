@@ -38,7 +38,8 @@ export async function syncEnrollmentToEvolmind(enrollmentId: string) {
     name: enrollment.studentName || enrollment.email.split("@")[0],
     groupid: enrollment.course.evolmindGroupId,
     externalId: enrollment.orderId ?? undefined,
-    welcomeEmail: true,
+    // Nosotros enviamos el correo de acceso (con nuestro diseño), no evolCampus
+    welcomeEmail: false,
   });
 
   await prisma.enrollment.update({
