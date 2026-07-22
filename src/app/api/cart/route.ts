@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  getCart,
-  getCartIdFromCookie,
-  getOrCreateCartId,
-  emptyCart,
-} from "@/lib/cart";
+import { getCart, getOrCreateCartId, resolveCurrentCart } from "@/lib/cart";
 
 // GET /api/cart -> carrito actual
 export async function GET() {
-  const cartId = getCartIdFromCookie();
-  if (!cartId) {
-    return NextResponse.json({ cart: emptyCart() });
-  }
-  const cart = await getCart(cartId);
+  const cart = await resolveCurrentCart();
   return NextResponse.json({ cart });
 }
 
@@ -63,11 +54,7 @@ export async function POST(req: NextRequest) {
 // DELETE /api/cart          -> vacía el carrito
 // DELETE /api/cart?courseId -> elimina un curso
 export async function DELETE(req: NextRequest) {
-  const cartId = getCartIdFromCookie();
-  if (!cartId) {
-    return NextResponse.json({ cart: emptyCart() });
-  }
-
+  const cartId = await getOrCreateCartId();
   const courseIdParam = req.nextUrl.searchParams.get("courseId");
 
   if (courseIdParam) {

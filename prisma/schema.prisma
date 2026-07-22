@@ -10,10 +10,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+/// Usuario / estudiante
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String // hash bcrypt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  carts       Cart[]
+  orders      Order[]
+  enrollments Enrollment[]
+
+  @@map("users")
+}
+
 /// Curso / producto que se puede comprar
 model Course {
-  id               Int        @id @default(autoincrement())
-  slug             String     @unique
+  id               Int      @id @default(autoincrement())
+  slug             String   @unique
   title            String
   category         String
   icon             String
@@ -21,28 +44,31 @@ model Course {
   description      String
   price            Int // precio en USD (dólares enteros)
   originalPrice    Int
-  rating           Float      @default(0)
-  reviews          Int        @default(0)
-  students         Int        @default(0)
-  weeks            Int        @default(0)
-  lessons          Int        @default(0)
+  rating           Float    @default(0)
+  reviews          Int      @default(0)
+  students         Int      @default(0)
+  weeks            Int      @default(0)
+  lessons          Int      @default(0)
   badge            String? // "bestseller" | "new" | "popular"
   evolmindCourseId String // ID del curso en Evolmind (matrícula)
-  active           Boolean    @default(true)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  cartItems CartItem[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  enrollments Enrollment[]
 
   @@map("courses")
 }
 
-/// Carrito de compras. Identificado por cookie anónima (token)
-/// hasta que exista autenticación de usuario.
+/// Carrito de compras. Anónimo (cookie) o asociado a un usuario.
 model Cart {
   id        String     @id @default(uuid())
+  userId    String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     CartItem[]
 
   @@map("carts")
@@ -60,4 +86,57 @@ model CartItem {
 
   @@unique([cartId, courseId])
   @@map("cart_items")
+}
+
+/// Orden de compra. Se crea al iniciar el checkout (PENDING) y se
+/// confirma vía webhook de Stripe (PAID).
+model Order {
+  id              String      @id @default(uuid())
+  userId          String?
+  email           String
+  status          OrderStatus @default(PENDING)
+  total           Int // total en USD
+  currency        String      @default("usd")
+  stripeSessionId String?     @unique
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user        User?        @relation(fields: [userId], references: [id])
+  items       OrderItem[]
+  enrollments Enrollment[]
+
+  @@map("orders")
+}
+
+/// Ítem de una orden (snapshot del precio al momento de la compra).
+model OrderItem {
+  id       Int    @id @default(autoincrement())
+  orderId  String
+  courseId Int
+  title    String
+  price    Int
+
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@map("order_items")
+}
+
+/// Matrícula de un estudiante en un curso (tras pago exitoso).
+model Enrollment {
+  id                   String   @id @default(uuid())
+  userId               String?
+  courseId             Int
+  orderId              String?
+  email                String
+  status               String   @default("active")
+  evolmindEnrollmentId String?
+  createdAt            DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id])
+  course Course  @relation(fields: [courseId], references: [id])
+  order  Order?  @relation(fields: [orderId], references: [id])
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
 }

@@ -118,12 +118,29 @@ Endpoints:
 | DELETE | `/api/cart?courseId=` | Elimina un curso |
 | DELETE | `/api/cart` | Vacía el carrito |
 
+## Autenticación
+
+- Usuarios con email + contraseña (hash **bcrypt**).
+- Sesión mediante **JWT firmado (jose)** en cookie httpOnly (7 días).
+- Requiere `AUTH_SECRET` en `.env.local` (`openssl rand -base64 32`).
+- Al iniciar sesión / registrarse, el **carrito anónimo se fusiona** con el del usuario.
+
+Endpoints: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
+
+Páginas: `/login`, `/registro`, `/cuenta` (mis cursos e historial de compras).
+
 ## Flujo de compra
 
-1. El usuario agrega cursos al carrito (persistido en `localStorage`).
-2. Al pagar, se crea una **Stripe Checkout Session** (`/api/checkout`) — los precios se resuelven en el servidor.
-3. Stripe redirige a la página de pago y luego a `/matricula/exito`.
-4. El **webhook** `checkout.session.completed` matricula al estudiante en Evolmind automáticamente.
+1. El usuario agrega cursos al carrito (persistido en Postgres).
+2. Al pagar, `/api/checkout` crea una **orden PENDING** (con snapshot de precios) y una **Stripe Checkout Session** — los precios se resuelven desde la BD.
+3. Stripe redirige al pago y luego a `/matricula/exito`.
+4. El **webhook** `checkout.session.completed`:
+   - marca la orden como **PAID**,
+   - crea las **matrículas** (`Enrollment`) en la BD,
+   - matricula al estudiante en **Evolmind**,
+   - vacía el carrito.
+
+El webhook es **idempotente**: si la orden ya está pagada, no reprocesa.
 
 ### Probar el webhook localmente
 

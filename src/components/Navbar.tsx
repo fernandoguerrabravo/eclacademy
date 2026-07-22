@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export function Navbar() {
   const { count, openCart } = useCart();
+  const { user, logout } = useAuth();
 
   return (
     <>
@@ -75,9 +77,28 @@ export function Navbar() {
               <i className="fas fa-shopping-cart"></i>
               {count > 0 && <span className="cart-count">{count}</span>}
             </button>
-            <Link href="/#cursos" className="btn-primary btn-sm">
-              Inscríbete
-            </Link>
+            {user ? (
+              <div className="nav-user">
+                <Link href="/cuenta" className="nav-user-btn">
+                  <span className="nav-user-avatar">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="nav-user-name">{user.name.split(" ")[0]}</span>
+                </Link>
+                <button className="nav-link" onClick={logout}>
+                  Salir
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link href="/login" className="nav-link">
+                  Ingresar
+                </Link>
+                <Link href="/registro" className="btn-primary btn-sm">
+                  Crear cuenta
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
