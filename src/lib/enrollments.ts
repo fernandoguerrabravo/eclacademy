@@ -19,6 +19,21 @@ export async function syncEnrollmentToEvolmind(enrollmentId: string) {
     return { success: true, message: "Ya estaba sincronizada" };
   }
 
+  // El curso debe tener un código de evolCampus para poder matricular
+  if (!enrollment.course.evolmindCourseId) {
+    const message =
+      "El curso no tiene código de evolCampus (evolmindCourseId). Enlázalo primero.";
+    await prisma.enrollment.update({
+      where: { id: enrollment.id },
+      data: {
+        evolmindSynced: false,
+        evolmindError: message,
+        syncAttempts: { increment: 1 },
+      },
+    });
+    return { success: false, message };
+  }
+
   const result = await enrollStudent({
     email: enrollment.email,
     name: enrollment.email.split("@")[0], // fallback si no hay nombre

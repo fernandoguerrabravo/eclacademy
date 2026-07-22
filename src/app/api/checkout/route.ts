@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
         orderId: order.id,
         evolmindCourseIds: dbCourses
           .map((c) => c.evolmindCourseId)
+          .filter(Boolean)
           .join(","),
         courseIds: dbCourses.map((c) => c.id).join(","),
       },

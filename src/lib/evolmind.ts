@@ -31,6 +31,12 @@ const cfg = {
   fieldEmail: process.env.EVOLMIND_FIELD_EMAIL || "email",
   fieldName: process.env.EVOLMIND_FIELD_NAME || "name",
   fieldCourse: process.env.EVOLMIND_FIELD_COURSE || "course",
+  // Creación de cursos (solo si tu instancia de evolCampus lo soporta).
+  // Desactivado por defecto: EVOLMIND_COURSE_CREATE_ENABLED=true para activar.
+  courseCreateEnabled: process.env.EVOLMIND_COURSE_CREATE_ENABLED === "true",
+  courseCreateAction: process.env.EVOLMIND_COURSE_ACTION || "addCourse",
+  fieldCourseName: process.env.EVOLMIND_FIELD_COURSE_NAME || "name",
+  fieldCourseCode: process.env.EVOLMIND_FIELD_COURSE_CODE || "code",
 };
 
 const TIMEOUT_MS = 15000;
@@ -191,4 +197,101 @@ export async function enrollStudent(
 
 function delay(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+// ============================================================
+// Creación de cursos en evolCampus
+// ============================================================
+
+export interface CourseCreateInput {
+  /** Nombre del curso */
+  name: string;
+  /** Código sugerido (p.ej. el slug). evolCampus puede devolver otro. */
+  code: string;
+  description?: string;
+}
+
+export interface CourseCreateResult {
+  success: boolean;
+  /** Código/ID del curso en evolCampus para usar en matrículas */
+  evolmindCourseId?: string;
+  message: string;
+  raw?: string;
+  simulated?: boolean;
+}
+
+/**
+ * Indica si la creación de cursos vía API está habilitada y configurada.
+ * IMPORTANTE: la API pública de evolCampus está orientada a matrícula; confirma
+ * con su soporte si tu cuenta expone un endpoint para crear cursos. Si no,
+ * los cursos se crean en su editor y aquí solo se enlaza el código.
+ */
+export function isCourseCreateEnabled(): boolean {
+  return cfg.courseCreateEnabled && isEvolmindConfigured();
+}
+
+/**
+ * Crea (o registra) un curso en evolCampus y devuelve su código.
+ * - Si la creación por API no está habilitada, devuelve un resultado
+ *   "pendiente de enlace manual" (no falla el flujo).
+ */
+export async function createCourse(
+  input: CourseCreateInput
+): Promise<CourseCreateResult> {
+  if (!isCourseCreateEnabled()) {
+    return {
+      success: false,
+      message:
+        "Creación de curso por API no habilitada. Crea el curso en evolCampus y enlaza su código manualmente.",
+      simulated: true,
+    };
+  }
+
+  const params = new URLSearchParams();
+  params.set(cfg.keyParam, cfg.key || "");
+  params.set(cfg.actionParam, cfg.courseCreateAction);
+  params.set(cfg.fieldCourseName, input.name);
+  params.set(cfg.fieldCourseCode, input.code);
+  if (input.description) params.set("description", input.description);
+  if (cfg.accountId) params.set("accountId", cfg.accountId);
+
+  try {
+    const res = await fetchWithTimeout(cfg.url as string, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+    const text = await res.text();
+
+    if (!res.ok) {
+      return {
+        success: false,
+        message: `HTTP ${res.status}: ${text.slice(0, 300)}`,
+        raw: text,
+      };
+    }
+
+    // Intenta extraer el código/id del curso de la respuesta
+    let evolmindCourseId: string | undefined = input.code;
+    try {
+      const json = JSON.parse(text);
+      evolmindCourseId =
+        json.courseId || json.code || json.id || input.code;
+    } catch {
+      // respuesta no-JSON
+    }
+
+    return {
+      success: true,
+      evolmindCourseId,
+      message: "Curso creado/registrado en evolCampus",
+      raw: text,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Error de red desconocido",
+    };
+  }
 }

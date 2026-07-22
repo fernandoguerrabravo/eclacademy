@@ -50,7 +50,10 @@ model Course {
   weeks            Int      @default(0)
   lessons          Int      @default(0)
   badge            String? // "bestseller" | "new" | "popular"
-  evolmindCourseId String // ID del curso en Evolmind (matrícula)
+  // ----- Vínculo con Evolmind / evolCampus -----
+  evolmindCourseId String? // código del curso en evolCampus (matrícula)
+  evolmindSynced   Boolean  @default(false)
+  evolmindError    String?
   active           Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

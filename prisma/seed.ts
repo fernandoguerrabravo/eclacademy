@@ -24,6 +24,7 @@ async function main() {
         lessons: course.lessons,
         badge: course.badge ?? null,
         evolmindCourseId: course.evolmindCourseId,
+        evolmindSynced: Boolean(course.evolmindCourseId),
       },
       create: {
         id: course.id,
@@ -42,10 +43,17 @@ async function main() {
         lessons: course.lessons,
         badge: course.badge ?? null,
         evolmindCourseId: course.evolmindCourseId,
+        evolmindSynced: Boolean(course.evolmindCourseId),
       },
     });
     console.log(`  ✓ ${course.slug}`);
   }
+
+  // Reajusta la secuencia de autoincremento tras insertar ids explícitos,
+  // para que los cursos creados luego (admin) no colisionen en el id.
+  await prisma.$executeRawUnsafe(
+    `SELECT setval(pg_get_serial_sequence('courses','id'), (SELECT MAX(id) FROM courses));`
+  );
 
   console.log("Seed completado.");
 }
