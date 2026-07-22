@@ -5,6 +5,8 @@ import {
   createAndSyncEnrollment,
   cancelEnrollmentsForOrder,
 } from "@/lib/enrollments";
+import { findOrCreateUser, createMagicToken } from "@/lib/auth";
+import { sendEmail, magicLinkEmail } from "@/lib/email";
 import type Stripe from "stripe";
 
 /**
@@ -94,24 +96,52 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
   }
   if (order.status === "PAID") return; // idempotente
 
+  const buyerEmail = email || order.email;
+
+  // Asegura una cuenta para el comprador (registrado o invitado)
+  const user = await findOrCreateUser(buyerEmail, name);
+
   await prisma.order.update({
     where: { id: order.id },
-    data: { status: "PAID", email: email || order.email },
+    data: { status: "PAID", email: buyerEmail, userId: user.id },
   });
 
+  const courseTitles: string[] = [];
   for (const item of order.items) {
     await createAndSyncEnrollment({
-      userId: order.userId ?? null,
+      userId: user.id,
       courseId: item.courseId,
       orderId: order.id,
-      email: email || order.email,
+      email: buyerEmail,
       name,
     });
+    courseTitles.push(item.title);
   }
 
-  if (order.userId) {
-    const cart = await prisma.cart.findFirst({ where: { userId: order.userId } });
-    if (cart) await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+  // Vacía el carrito del usuario
+  const cart = await prisma.cart.findFirst({ where: { userId: user.id } });
+  if (cart) await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+  // Envía el email de acceso (magic link)
+  await sendAccessEmail(user.id, buyerEmail, user.name, courseTitles);
+}
+
+/** Envía el email con el enlace de acceso sin contraseña. */
+async function sendAccessEmail(
+  userId: string,
+  email: string,
+  name: string,
+  courses: string[]
+) {
+  try {
+    const token = await createMagicToken(userId);
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const url = `${siteUrl}/api/auth/magic?token=${encodeURIComponent(token)}`;
+    const { subject, html } = magicLinkEmail({ name, url, courses });
+    await sendEmail({ to: email, subject, html });
+  } catch (err) {
+    console.error("[webhook] No se pudo enviar el email de acceso:", err);
   }
 }
 

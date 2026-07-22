@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
+  const [magicLoading, setMagicLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,6 +34,25 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function requestMagicLink() {
+    if (!email) {
+      setError("Escribe tu email para enviarte el enlace de acceso");
+      return;
+    }
+    setMagicLoading(true);
+    setError(null);
+    try {
+      await fetch("/api/auth/request-magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setMagicSent(true);
+    } finally {
+      setMagicLoading(false);
     }
   }
 
@@ -75,6 +96,25 @@ export default function LoginPage() {
             {loading ? "Ingresando..." : "Ingresar"}
           </button>
         </form>
+
+        <div className="auth-divider"><span>o</span></div>
+
+        {magicSent ? (
+          <div className="auth-magic-sent">
+            <i className="fas fa-envelope-circle-check"></i>
+            <p>Si tienes una cuenta, te enviamos un enlace de acceso a <strong>{email}</strong>. Revisa tu correo.</p>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="btn-outline btn-lg btn-full"
+            onClick={requestMagicLink}
+            disabled={magicLoading}
+          >
+            <i className="fas fa-envelope"></i>{" "}
+            {magicLoading ? "Enviando..." : "Enviarme un enlace de acceso"}
+          </button>
+        )}
 
         <p className="auth-switch">
           ¿No tienes cuenta? <Link href="/registro">Crear cuenta</Link>

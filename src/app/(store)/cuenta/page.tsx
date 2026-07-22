@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Footer } from "@/components/Footer";
+import { AccountCourseCard } from "@/components/AccountCourseCard";
 
 export const dynamic = "force-dynamic";
 
@@ -49,23 +50,13 @@ export default async function AccountPage() {
           ) : (
             <div className="account-courses">
               {enrollments.map((e) => (
-                <div className="account-course-card" key={e.id}>
-                  <div className="account-course-icon">
-                    <i className={`fas ${e.course.icon}`}></i>
-                  </div>
-                  <div className="account-course-info">
-                    <h3>{e.course.title}</h3>
-                    <span className="account-course-status">
-                      <i className="fas fa-circle-check"></i> Matrícula activa
-                    </span>
-                  </div>
-                  <Link
-                    href={`/cursos/${e.course.slug}`}
-                    className="btn-outline btn-sm"
-                  >
-                    Ir al curso
-                  </Link>
-                </div>
+                <AccountCourseCard
+                  key={e.id}
+                  enrollmentId={e.id}
+                  title={e.course.title}
+                  icon={e.course.icon}
+                  synced={e.evolmindSynced}
+                />
               ))}
             </div>
           )}

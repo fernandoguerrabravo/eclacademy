@@ -76,3 +76,47 @@ export async function getCurrentUser() {
   if (!session) return null;
   return prisma.user.findUnique({ where: { id: session.userId } });
 }
+
+// ----- Magic link (acceso por email, sin contraseña) -----
+const MAGIC_MAX_AGE = 60 * 60 * 24 * 7; // 7 días
+
+/** Genera un token firmado para acceso por email. */
+export async function createMagicToken(userId: string): Promise<string> {
+  return new SignJWT({ userId, purpose: "magic" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${MAGIC_MAX_AGE}s`)
+    .sign(getSecret());
+}
+
+/** Verifica un token de magic link y devuelve el userId, o null. */
+export async function verifyMagicToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.purpose !== "magic") return null;
+    return (payload.userId as string) || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Busca un usuario por email o lo crea (para compras de invitado).
+ * Los usuarios creados así no tienen contraseña usable; acceden por magic link
+ * hasta que definan una contraseña.
+ */
+export async function findOrCreateUser(email: string, name: string) {
+  const normalized = email.toLowerCase().trim();
+  const existing = await prisma.user.findUnique({
+    where: { email: normalized },
+  });
+  if (existing) return existing;
+
+  // Contraseña aleatoria no usable (el acceso es por magic link)
+  const randomPassword = await hashPassword(
+    `${Date.now()}-${Math.random().toString(36)}`
+  );
+  return prisma.user.create({
+    data: { email: normalized, name: name || normalized.split("@")[0], password: randomPassword },
+  });
+}
