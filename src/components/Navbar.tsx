@@ -90,14 +90,9 @@ export function Navbar() {
                 </button>
               </div>
             ) : (
-              <>
-                <Link href="/login" className="nav-link">
-                  Ingresar
-                </Link>
-                <Link href="/registro" className="btn-primary btn-sm">
-                  Crear cuenta
-                </Link>
-              </>
+              <Link href="/login" className="btn-primary btn-sm">
+                Acceder
+              </Link>
             )}
           </div>
         </div>

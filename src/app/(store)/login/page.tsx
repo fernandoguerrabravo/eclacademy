@@ -2,47 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { useCart } from "@/context/CartContext";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { refresh } = useAuth();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [magicSent, setMagicSent] = useState(false);
-  const [magicLoading, setMagicLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!email) return;
     setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al iniciar sesión");
-      await refresh();
-      router.push("/cuenta");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function requestMagicLink() {
-    if (!email) {
-      setError("Escribe tu email para enviarte el enlace de acceso");
-      return;
-    }
-    setMagicLoading(true);
     setError(null);
     try {
       await fetch("/api/auth/request-magic-link", {
@@ -50,9 +20,11 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      setMagicSent(true);
+      setSent(true);
+    } catch {
+      setError("No se pudo enviar el enlace. Inténtalo de nuevo.");
     } finally {
-      setMagicLoading(false);
+      setLoading(false);
     }
   }
 
@@ -63,62 +35,53 @@ export default function LoginPage() {
           <i className="fas fa-graduation-cap"></i>
           <span>ECL <strong>Academy</strong></span>
         </div>
-        <h1>Inicia sesión</h1>
-        <p className="auth-sub">Accede a tus cursos y matrículas</p>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          {error && <div className="auth-error">{error}</div>}
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="tu@email.com"
-            />
-          </div>
-          <div className="form-group">
-            <label>Contraseña</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
-          </div>
-          <button
-            type="submit"
-            className="btn-primary btn-lg btn-full"
-            disabled={loading}
-          >
-            {loading ? "Ingresando..." : "Ingresar"}
-          </button>
-        </form>
-
-        <div className="auth-divider"><span>o</span></div>
-
-        {magicSent ? (
+        {sent ? (
           <div className="auth-magic-sent">
             <i className="fas fa-envelope-circle-check"></i>
-            <p>Si tienes una cuenta, te enviamos un enlace de acceso a <strong>{email}</strong>. Revisa tu correo.</p>
+            <p>
+              Si existe una cuenta con <strong>{email}</strong>, te enviamos un
+              enlace de acceso. Revisa tu correo (y la carpeta de spam).
+            </p>
           </div>
         ) : (
-          <button
-            type="button"
-            className="btn-outline btn-lg btn-full"
-            onClick={requestMagicLink}
-            disabled={magicLoading}
-          >
-            <i className="fas fa-envelope"></i>{" "}
-            {magicLoading ? "Enviando..." : "Enviarme un enlace de acceso"}
-          </button>
-        )}
+          <>
+            <h1>Accede a tus cursos</h1>
+            <p className="auth-sub">
+              Te enviamos un enlace de acceso a tu correo. Sin contraseñas.
+            </p>
+            <form onSubmit={handleSubmit} className="auth-form">
+              {error && <div className="auth-error">{error}</div>}
+              <div className="form-group">
+                <label>Tu email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="tu@email.com"
+                  autoFocus
+                />
+              </div>
+              <button
+                type="submit"
+                className="btn-primary btn-lg btn-full"
+                disabled={loading}
+              >
+                <i className="fas fa-envelope"></i>{" "}
+                {loading ? "Enviando..." : "Enviarme el enlace de acceso"}
+              </button>
+            </form>
 
-        <p className="auth-switch">
-          ¿No tienes cuenta? <Link href="/registro">Crear cuenta</Link>
-        </p>
+            <p className="auth-switch">
+              ¿Aún no tienes cursos?{" "}
+              <Link href="/#cursos">Explora el catálogo</Link>
+            </p>
+            <p className="auth-note">
+              Tu cuenta se crea automáticamente al inscribirte en un curso.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

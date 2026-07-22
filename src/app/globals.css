@@ -1804,6 +1804,13 @@ body {
   text-decoration: none;
 }
 
+.auth-note {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  margin-top: 12px;
+}
+
 .auth-switch a:hover {
   text-decoration: underline;
 }
