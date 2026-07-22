@@ -229,6 +229,35 @@ export async function enrollStudent(
   }
 }
 
+/**
+ * Actualiza el estado de una matrícula en evolCampus (POST /v1/updateEnrollment).
+ * status: 0=activa, 1=archivada, 2=baja, 3=solo lectura
+ */
+export async function updateEnrollmentStatus(
+  enrollmentId: number,
+  status: 0 | 1 | 2 | 3
+): Promise<{ success: boolean; message: string }> {
+  if (!isEvolmindConfigured()) {
+    return { success: true, message: "Simulado (Evolmind no configurado)" };
+  }
+  try {
+    const data = await apiPostForm("/v1/updateEnrollment", {
+      enrollmentid: enrollmentId,
+      status,
+    });
+    const ok = data.result === 1 || data.result === "1";
+    return {
+      success: ok,
+      message: data.message || data.error || (ok ? "OK" : "KO"),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Error",
+    };
+  }
+}
+
 // ============================================================
 // Cursos y grupos (para enlazar en nuestra app)
 // ============================================================

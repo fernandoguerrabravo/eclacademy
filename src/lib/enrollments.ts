@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { enrollStudent } from "@/lib/evolmind";
+import { enrollStudent, updateEnrollmentStatus } from "@/lib/evolmind";
 
 /**
  * Sincroniza una matrícula (Enrollment) con evolCampus y actualiza su estado.
@@ -102,6 +102,32 @@ export async function createAndSyncEnrollment(params: {
 
   await syncEnrollmentToEvolmind(enrollment.id);
   return enrollment;
+}
+
+/**
+ * Da de baja en evolCampus todas las matrículas de una orden (reembolso).
+ * Marca las matrículas locales como 'cancelled'.
+ */
+export async function cancelEnrollmentsForOrder(orderId: string) {
+  const enrollments = await prisma.enrollment.findMany({
+    where: { orderId },
+  });
+
+  for (const e of enrollments) {
+    if (e.evolmindEnrollmentId) {
+      const evEnrollmentId = Number(e.evolmindEnrollmentId);
+      if (!Number.isNaN(evEnrollmentId)) {
+        const r = await updateEnrollmentStatus(evEnrollmentId, 2); // 2 = baja
+        console.log(
+          `[refund] Baja matrícula ${e.id} (evol ${evEnrollmentId}): ${r.message}`
+        );
+      }
+    }
+    await prisma.enrollment.update({
+      where: { id: e.id },
+      data: { status: "cancelled" },
+    });
+  }
 }
 
 /** Reintenta todas las matrículas no sincronizadas (job / endpoint admin). */
