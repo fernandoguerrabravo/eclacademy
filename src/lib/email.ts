@@ -92,8 +92,10 @@ function layout(content: string, preview = ""): string {
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
         <!-- Header -->
         <tr><td style="background:${COLORS.dark};padding:22px 32px;">
-          <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.3px;">ECL <span style="color:${COLORS.orange};">Academy</span></span>
-          <span style="float:right;color:#c9ced3;font-size:11px;padding-top:6px;">Amazon Service Partner</span>
+          <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.3px;">
+            <span style="color:${COLORS.orange};font-size:22px;">&#127891;</span>&nbsp;ECL <span style="color:${COLORS.orange};">Academy</span>
+          </span>
+          <span style="float:right;color:#c9ced3;font-size:11px;padding-top:8px;">Amazon Service Partner</span>
         </td></tr>
         <!-- Content -->
         <tr><td style="padding:32px;">${content}</td></tr>
