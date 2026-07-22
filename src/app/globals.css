@@ -2422,3 +2422,43 @@ body {
   text-decoration: underline;
 }
 .link-btn:hover { color: var(--amazon-orange); }
+
+/* ===== ADMIN GROUPS ===== */
+.group-list {
+  display: grid;
+  gap: 12px;
+}
+
+.group-card {
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.group-card.current {
+  border-color: var(--amazon-orange);
+  background: #fffbeb;
+}
+
+.group-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.group-card-meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
+.group-edit {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-100);
+}

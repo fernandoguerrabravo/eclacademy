@@ -279,7 +279,11 @@ export interface EvolmindGroup {
   id: number;
   name: string;
   status: string;
-  type: string;
+  numstudents?: number;
+  type?: string; // ASYNCRONOUS | SYNCRONOUS
+  startdate?: string | null;
+  enddate?: string | null;
+  duration?: number; // días (asíncrono)
 }
 
 /** POST /v1/getCourseGroups — grupos de un curso de evolCampus. */
@@ -291,7 +295,16 @@ export async function getEvolmindCourseGroups(
     idCourse: courseId,
     status,
   });
-  return data.groups || [];
+  return (data.groups || []).map((g: any) => ({
+    id: Number(g.id),
+    name: g.name,
+    status: g.status,
+    numstudents: g.numstudents != null ? Number(g.numstudents) : undefined,
+    type: g.type,
+    startdate: g.startdate ?? null,
+    enddate: g.enddate ?? null,
+    duration: g.duration != null ? Number(g.duration) : undefined,
+  }));
 }
 
 export interface CreateGroupInput {

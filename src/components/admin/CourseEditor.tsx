@@ -219,49 +219,286 @@ export function CourseEditor({ courseId }: { courseId: number }) {
           <ListEditor value={c.audience} onChange={(v) => set("audience", v)} />
         </section>
 
-        {c.evolmindGroupId && <GroupEditor groupId={c.evolmindGroupId} />}
-
-        {c.evolmindCourseId && (
-          <GroupCreator
+        {c.evolmindCourseId ? (
+          <GroupsManager
             evolmindCourseId={c.evolmindCourseId}
             localCourseId={c.id}
-            onLinked={(groupId) => set("evolmindGroupId", groupId)}
+            currentGroupId={c.evolmindGroupId}
+            onChange={(g) => set("evolmindGroupId", g)}
           />
+        ) : (
+          <section className="admin-section">
+            <h2>Grupos de evolCampus</h2>
+            <p className="admin-muted">
+              Este curso aún no está enlazado con evolCampus. Sincroniza el
+              catálogo primero.
+            </p>
+          </section>
         )}
       </div>
     </div>
   );
 }
 
-function GroupEditor({ groupId }: { groupId: number }) {
-  const [name, setName] = useState("");
-  const [type, setType] = useState<"A" | "S">("A");
-  const [daysDuration, setDaysDuration] = useState(30);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [busy, setBusy] = useState(false);
+interface Group {
+  id: number;
+  name: string;
+  status: string;
+  numstudents?: number;
+  type?: string;
+  startdate?: string | null;
+  enddate?: string | null;
+  duration?: number;
+}
+
+function GroupsManager({
+  evolmindCourseId,
+  localCourseId,
+  currentGroupId,
+  onChange,
+}: {
+  evolmindCourseId: number;
+  localCourseId: number;
+  currentGroupId: number | null;
+  onChange: (groupId: number) => void;
+}) {
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/evolmind-courses?courseId=${evolmindCourseId}`
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error");
+      setGroups(data.groups || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setLoading(false);
+    }
+  }, [evolmindCourseId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  function flash(msg: string) {
+    setNote(msg);
+    setTimeout(() => setNote(null), 4000);
+  }
+
+  async function useForEnrollment(groupId: number) {
+    const res = await fetch("/api/admin/courses", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId: localCourseId, evolmindGroupId: groupId }),
+    });
+    if (res.ok) {
+      onChange(groupId);
+      flash(`Grupo ${groupId} asignado como destino de matrícula.`);
+    }
+  }
+
+  return (
+    <section className="admin-section">
+      <div className="admin-section-head">
+        <div>
+          <h2>Grupos en evolCampus</h2>
+          <p className="admin-muted">
+            Convocatorias del curso. Elige cuál usar para matricular a los compradores.
+          </p>
+        </div>
+        <button className="btn-outline btn-sm" onClick={() => setCreating((v) => !v)}>
+          <i className="fas fa-plus"></i> Nuevo grupo
+        </button>
+      </div>
+
+      {note && <div className="admin-alert success">{note}</div>}
+      {error && <div className="admin-alert error">{error}</div>}
+
+      {creating && (
+        <GroupCreateForm
+          evolmindCourseId={evolmindCourseId}
+          localCourseId={localCourseId}
+          onCreated={(gid, linked) => {
+            setCreating(false);
+            if (linked && gid) onChange(gid);
+            load();
+          }}
+        />
+      )}
+
+      {loading ? (
+        <p>Cargando grupos...</p>
+      ) : groups.length === 0 ? (
+        <p className="admin-muted">Este curso no tiene grupos activos en evolCampus.</p>
+      ) : (
+        <div className="group-list">
+          {groups.map((g) => (
+            <GroupRow
+              key={g.id}
+              group={g}
+              isCurrent={g.id === currentGroupId}
+              onUse={() => useForEnrollment(g.id)}
+              onUpdated={() => {
+                flash(`Grupo ${g.id} actualizado.`);
+                load();
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function GroupRow({
+  group,
+  isCurrent,
+  onUse,
+  onUpdated,
+}: {
+  group: Group;
+  isCurrent: boolean;
+  onUse: () => void;
+  onUpdated: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const isAsync = (group.type || "").toUpperCase().startsWith("ASYNC");
+  const [name, setName] = useState(group.name);
+  const [days, setDays] = useState(group.duration || 30);
+  const [startDate, setStartDate] = useState(group.startdate || "");
+  const [endDate, setEndDate] = useState(group.enddate || "");
+  const [busy, setBusy] = useState(false);
 
   async function save() {
     setBusy(true);
-    setNote(null);
-    setError(null);
     try {
       const res = await fetch("/api/admin/evolmind-groups", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          groupId,
-          name: name || undefined,
-          daysDuration: type === "A" && daysDuration ? daysDuration : undefined,
-          startDate: type === "S" ? startDate || undefined : undefined,
-          endDate: type === "S" ? endDate || undefined : undefined,
+          groupId: group.id,
+          name: name !== group.name ? name : undefined,
+          daysDuration: isAsync ? days : undefined,
+          startDate: !isAsync ? startDate || undefined : undefined,
+          endDate: !isAsync ? endDate || undefined : undefined,
+        }),
+      });
+      if (res.ok) {
+        setEditing(false);
+        onUpdated();
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className={`group-card ${isCurrent ? "current" : ""}`}>
+      <div className="group-card-head">
+        <div>
+          <strong>{group.name}</strong>{" "}
+          <span className="admin-slug">id {group.id}</span>
+          {isCurrent && <span className="badge-ok" style={{ marginLeft: 8 }}>Matrícula activa</span>}
+        </div>
+        <div className="row-actions">
+          {!isCurrent && (
+            <button className="link-btn" onClick={onUse}>Usar para matrícula</button>
+          )}
+          <button className="link-btn" onClick={() => setEditing((v) => !v)}>
+            {editing ? "Cancelar" : "Editar"}
+          </button>
+        </div>
+      </div>
+      <div className="group-card-meta">
+        <span>{isAsync ? "Asíncrono" : "Síncrono"}</span>
+        {isAsync ? (
+          <span>{group.duration} días</span>
+        ) : (
+          <span>{group.startdate} → {group.enddate}</span>
+        )}
+        <span>{group.numstudents ?? 0} alumnos</span>
+        <span>{group.status}</span>
+      </div>
+
+      {editing && (
+        <div className="group-edit">
+          <div className="editor-field">
+            <label>Nombre</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          {isAsync ? (
+            <div className="editor-field">
+              <label>Duración (días)</label>
+              <input type="number" min={1} value={days} onChange={(e) => setDays(Number(e.target.value))} />
+            </div>
+          ) : (
+            <div className="editor-row">
+              <div className="editor-field">
+                <label>Inicio</label>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              </div>
+              <div className="editor-field">
+                <label>Fin</label>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
+            </div>
+          )}
+          <button className="btn-primary btn-sm" onClick={save} disabled={busy}>
+            {busy ? "Guardando..." : "Guardar grupo"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GroupCreateForm({
+  evolmindCourseId,
+  localCourseId,
+  onCreated,
+}: {
+  evolmindCourseId: number;
+  localCourseId: number;
+  onCreated: (groupId: number | null, linked: boolean) => void;
+}) {
+  const [name, setName] = useState("");
+  const [type, setType] = useState<"A" | "S">("A");
+  const [daysDuration, setDaysDuration] = useState(30);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [linkIt, setLinkIt] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function create() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/evolmind-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          evolmindCourseId,
+          name,
+          type,
+          daysDuration: type === "A" ? daysDuration : undefined,
+          startDate: type === "S" ? startDate : undefined,
+          endDate: type === "S" ? endDate : undefined,
+          linkToCourseId: linkIt ? localCourseId : undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
-      setNote("Grupo actualizado en evolCampus.");
+      onCreated(data.groupId ?? null, Boolean(data.linkedCourse));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
     } finally {
@@ -270,17 +507,11 @@ function GroupEditor({ groupId }: { groupId: number }) {
   }
 
   return (
-    <section className="admin-section">
-      <h2>Grupo de matrícula (id {groupId})</h2>
-      <p className="admin-muted">
-        Modifica el grupo actual en evolCampus. Deja en blanco lo que no quieras cambiar.
-      </p>
-      {note && <div className="admin-alert success" style={{ marginTop: 12 }}>{note}</div>}
-      {error && <div className="admin-alert error" style={{ marginTop: 12 }}>{error}</div>}
-
+    <div className="group-edit" style={{ marginBottom: 16 }}>
+      {error && <div className="admin-alert error">{error}</div>}
       <div className="editor-field">
-        <label>Nuevo nombre (opcional)</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Dejar en blanco para no cambiar" />
+        <label>Nombre del grupo</label>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Convocatoria Marzo 2026" />
       </div>
       <div className="editor-row">
         <div className="editor-field">
@@ -308,115 +539,14 @@ function GroupEditor({ groupId }: { groupId: number }) {
           </>
         )}
       </div>
-      <button className="btn-primary btn-sm" onClick={save} disabled={busy}>
-        {busy ? "Guardando..." : "Actualizar grupo"}
-      </button>
-    </section>
-  );
-}
-
-function GroupCreator({
-  evolmindCourseId,
-  localCourseId,
-  onLinked,
-}: {
-  evolmindCourseId: number;
-  localCourseId: number;
-  onLinked: (groupId: number) => void;
-}) {
-  const [name, setName] = useState("");
-  const [type, setType] = useState<"A" | "S">("A");
-  const [daysDuration, setDaysDuration] = useState(30);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [linkIt, setLinkIt] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function create() {
-    setBusy(true);
-    setResult(null);
-    setError(null);
-    try {
-      const res = await fetch("/api/admin/evolmind-groups", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          evolmindCourseId,
-          name,
-          type,
-          daysDuration: type === "A" ? daysDuration : undefined,
-          startDate: type === "S" ? startDate : undefined,
-          endDate: type === "S" ? endDate : undefined,
-          linkToCourseId: linkIt ? localCourseId : undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error");
-      setResult(
-        `Grupo creado en evolCampus (id ${data.groupId})${
-          data.linkedCourse ? " y enlazado como grupo de matrícula." : "."
-        }`
-      );
-      if (data.linkedCourse && data.groupId) onLinked(data.groupId);
-      setName("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <section className="admin-section">
-      <h2>Crear grupo en evolCampus</h2>
-      <p className="admin-muted">
-        Crea una nueva convocatoria (grupo) para este curso en evolCampus.
-      </p>
-      {result && <div className="admin-alert success" style={{ marginTop: 12 }}>{result}</div>}
-      {error && <div className="admin-alert error" style={{ marginTop: 12 }}>{error}</div>}
-
-      <div className="editor-field">
-        <label>Nombre del grupo</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Convocatoria Marzo 2026" />
-      </div>
-      <div className="editor-row">
-        <div className="editor-field">
-          <label>Tipo</label>
-          <select value={type} onChange={(e) => setType(e.target.value as "A" | "S")}>
-            <option value="A">Asíncrono (cada alumno a su ritmo)</option>
-            <option value="S">Síncrono (fechas fijas)</option>
-          </select>
-        </div>
-        {type === "A" ? (
-          <div className="editor-field">
-            <label>Duración (días)</label>
-            <input type="number" min={1} value={daysDuration} onChange={(e) => setDaysDuration(Number(e.target.value))} />
-          </div>
-        ) : (
-          <>
-            <div className="editor-field">
-              <label>Inicio</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div className="editor-field">
-              <label>Fin</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
-          </>
-        )}
-      </div>
       <label className="admin-switch" style={{ marginBottom: 12 }}>
         <input type="checkbox" checked={linkIt} onChange={(e) => setLinkIt(e.target.checked)} />
-        <span>Usar este grupo como destino de matrícula de este curso</span>
+        <span>Usar este grupo como destino de matrícula</span>
       </label>
-      <div>
-        <button className="btn-primary btn-sm" onClick={create} disabled={busy || !name}>
-          {busy ? "Creando..." : "Crear grupo"}
-        </button>
-      </div>
-    </section>
+      <button className="btn-primary btn-sm" onClick={create} disabled={busy || !name}>
+        {busy ? "Creando..." : "Crear grupo"}
+      </button>
+    </div>
   );
 }
 

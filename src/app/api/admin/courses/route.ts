@@ -99,6 +99,20 @@ export async function PATCH(req: NextRequest) {
     if (body.lessons !== undefined) data.lessons = Number(body.lessons);
     if (body.published !== undefined) data.published = Boolean(body.published);
 
+    // Grupo de matrícula (elegir entre los grupos existentes en evolCampus)
+    if (body.evolmindGroupId !== undefined) {
+      data.evolmindGroupId = body.evolmindGroupId
+        ? Number(body.evolmindGroupId)
+        : null;
+      data.evolmindSynced = Boolean(body.evolmindGroupId);
+      if (body.evolmindGroupId) data.evolmindError = null;
+    }
+    if (body.evolmindCourseId !== undefined) {
+      data.evolmindCourseId = body.evolmindCourseId
+        ? Number(body.evolmindCourseId)
+        : null;
+    }
+
     // Campos de marketing (listas de texto)
     for (const f of ["whatYouLearn", "requirements", "audience"] as const) {
       if (body[f] !== undefined) {
