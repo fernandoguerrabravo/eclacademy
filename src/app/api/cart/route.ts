@@ -24,9 +24,9 @@ export async function POST(req: NextRequest) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
     });
-    if (!course || !course.active) {
+    if (!course || !course.active || !course.published) {
       return NextResponse.json(
-        { error: "Curso no encontrado" },
+        { error: "Curso no disponible" },
         { status: 404 }
       );
     }

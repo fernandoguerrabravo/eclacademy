@@ -50,12 +50,15 @@ model Course {
   weeks            Int      @default(0)
   lessons          Int      @default(0)
   badge            String? // "bestseller" | "new" | "popular"
-  // ----- Vínculo con evolCampus -----
+  // ----- Vínculo con evolCampus (fuente de verdad del catálogo) -----
   evolmindCourseId Int? // id del curso en evolCampus (getCourses)
   evolmindGroupId  Int? // id del grupo en evolCampus (newEnrollment[groupid])
   evolmindSynced   Boolean  @default(false)
   evolmindError    String?
-  active           Boolean  @default(true)
+  subjects         Json? // asignaturas del curso en evolCampus
+  // ----- Comercio / presentación (gestionado en nuestra plataforma) -----
+  published        Boolean  @default(false) // visible en la tienda
+  active           Boolean  @default(true) // activo en evolCampus (matriculable)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

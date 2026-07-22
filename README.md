@@ -156,42 +156,42 @@ Implementada contra la **API real de evolCampus v26.01** (`https://api.evolcampu
 - Cada `Enrollment` guarda su estado: `evolmindSynced`, `evolmindEnrollmentId`,
   `evolmindUserId`, `evolmindError`, `evolmindSyncedAt`, `syncAttempts`.
 
-### Cursos: enlace (no creación)
+### Catálogo: evolCampus es la fuente de verdad
 
-> **Importante:** evolCampus **no permite crear cursos por API** (se crean en su
-> editor de contenidos). El flujo correcto es **enlazar**: listar los cursos
-> reales de evolCampus (`getCourses`), elegir el `id` y el `groupid`
-> (`getCourseGroups`) del grupo donde matricular, y guardarlos en el curso local.
+Los cursos **se leen desde evolCampus**; no se crean en nuestra plataforma. El
+catálogo local es un espejo que añade solo lo que evolCampus no tiene:
+**precio, presentación y el flag de publicación**.
 
-Cada `Course` guarda `evolmindCourseId` (id del curso) y `evolmindGroupId`
-(grupo de matrícula). Un curso está **listo para matricular** cuando tiene
-`evolmindGroupId` (`evolmindSynced = true`).
+- **Sincronización** (`getCoursesGroups`): crea/actualiza los cursos locales,
+  enlazando `evolmindCourseId` y `evolmindGroupId` automáticamente, guardando las
+  asignaturas, y desactivando los que ya no existen en evolCampus.
+- Los cursos nuevos entran con `price = 0` y `published = false`. El admin fija
+  el precio y publica.
+- La **tienda** (home, detalle, checkout) muestra solo cursos `published`,
+  `active` y con `evolmindGroupId` (matriculables).
 
 ### Endpoints admin (protegidos con `ADMIN_TOKEN`)
 
 | Método | Ruta | Acción |
 |---|---|---|
-| GET | `/api/admin/courses` | Cursos locales con su estado de enlace |
-| POST | `/api/admin/courses` | Crea un curso (opcionalmente ya enlazado) |
-| PATCH | `/api/admin/courses` | Enlaza un curso con evolCampus (course/group id) |
+| GET | `/api/admin/courses` | Cursos locales con su estado |
+| POST | `/api/admin/courses` | **Sincroniza** el catálogo desde evolCampus |
+| PATCH | `/api/admin/courses` | Edita precio/presentación y publica un curso |
 | GET | `/api/admin/evolmind-courses` | Lista cursos reales de evolCampus |
 | GET | `/api/admin/evolmind-courses?courseId=ID` | Lista grupos de un curso |
 | POST | `/api/admin/evolmind-test` | Prueba una matrícula real sin pago |
 | POST | `/api/admin/sync-enrollments` | Reintenta matrículas no sincronizadas |
 
-Flujo de enlace de un curso:
+Flujo típico:
 
 ```bash
-# 1. Ver los cursos reales de evolCampus
-curl /api/admin/evolmind-courses -H "Authorization: Bearer $ADMIN_TOKEN"
+# 1. Sincronizar el catálogo desde evolCampus
+curl -X POST /api/admin/courses -H "Authorization: Bearer $ADMIN_TOKEN"
 
-# 2. Ver los grupos del curso elegido (p.ej. id 50)
-curl "/api/admin/evolmind-courses?courseId=50" -H "Authorization: Bearer $ADMIN_TOKEN"
-
-# 3. Enlazar el curso local 1 con el curso 50 / grupo 99
+# 2. Fijar precio y publicar un curso (p.ej. id 2)
 curl -X PATCH /api/admin/courses -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"courseId":1,"evolmindCourseId":50,"evolmindGroupId":99}'
+  -d '{"courseId":2,"price":247,"originalPrice":397,"published":true}'
 ```
 
 ### Qué necesito de tu cuenta evolCampus

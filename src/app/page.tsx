@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { courses } from "@/lib/courses";
+import { getStoreCourses } from "@/lib/courses-db";
 import { CourseCard } from "@/components/CourseCard";
 import { Footer } from "@/components/Footer";
+
+export const dynamic = "force-dynamic";
 
 const topics = [
   { icon: "fa-ship", label: "Cumplimiento Aduanero" },
@@ -36,7 +38,8 @@ const testimonials = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const courses = await getStoreCourses();
   return (
     <>
       {/* Hero */}
@@ -101,11 +104,17 @@ export default function HomePage() {
             internacional con años de experiencia ayudando a sellers
             latinoamericanos.
           </p>
-          <div className="courses-carousel">
-            {courses.map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-          </div>
+          {courses.length === 0 ? (
+            <p className="section-subtitle">
+              Pronto publicaremos nuestros cursos. Vuelve muy pronto.
+            </p>
+          ) : (
+            <div className="courses-carousel">
+              {courses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

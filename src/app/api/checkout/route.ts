@@ -30,9 +30,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Cursos desde la BD (precios de confianza)
+    // Cursos desde la BD (precios de confianza, solo publicados y matriculables)
     const dbCourses = await prisma.course.findMany({
-      where: { id: { in: itemIds }, active: true },
+      where: {
+        id: { in: itemIds },
+        active: true,
+        published: true,
+        NOT: { evolmindGroupId: null },
+      },
     });
 
     if (dbCourses.length !== itemIds.length) {

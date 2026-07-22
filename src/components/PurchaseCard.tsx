@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
-import type { Course } from "@/lib/courses";
+import type { StoreCourse } from "@/lib/courses-db";
 
-export function PurchaseCard({ course }: { course: Course }) {
+export function PurchaseCard({ course }: { course: StoreCourse }) {
   const { addItem } = useCart();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import type { Course } from "@/lib/courses";
+import type { StoreCourse } from "@/lib/courses-db";
 
 const badgeLabels: Record<string, string> = {
   bestseller: "Más Vendido",
@@ -10,7 +10,7 @@ const badgeLabels: Record<string, string> = {
   popular: "Popular",
 };
 
-export function CourseCard({ course }: { course: Course }) {
+export function CourseCard({ course }: { course: StoreCourse }) {
   const { addItem } = useCart();
 
   function handleAdd(e: React.MouseEvent) {

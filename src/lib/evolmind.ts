@@ -265,6 +265,31 @@ export async function getEvolmindCourseGroups(
   return data.groups || [];
 }
 
+export interface EvolmindCourseWithGroups {
+  id: number;
+  name: string;
+  status: "ACTIVE" | "INACTIVE";
+  ngroups?: number;
+  tags?: string[];
+  subjects?: { subjectid: number | string; subject: string }[];
+  groups?: {
+    groupid: number;
+    group: string;
+    type: string;
+  }[];
+}
+
+/**
+ * GET /v1/getCoursesGroups — cursos activos con sus grupos, en una sola llamada.
+ * Ideal para sincronizar el catálogo local.
+ */
+export async function getEvolmindCoursesWithGroups(): Promise<
+  EvolmindCourseWithGroups[]
+> {
+  const data = await apiGet("/v1/getCoursesGroups");
+  return data.courses || [];
+}
+
 // ============================================================
 // Acceso directo (autologin) — para "Ir al curso"
 // ============================================================
