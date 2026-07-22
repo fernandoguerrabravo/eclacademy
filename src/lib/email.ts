@@ -91,11 +91,18 @@ function layout(content: string, preview = ""): string {
     <tr><td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
         <!-- Header -->
-        <tr><td style="background:${COLORS.dark};padding:22px 32px;">
-          <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.3px;">
-            <span style="color:${COLORS.orange};font-size:22px;">&#127891;</span>&nbsp;ECL <span style="color:${COLORS.orange};">Academy</span>
-          </span>
-          <span style="float:right;color:#c9ced3;font-size:11px;padding-top:8px;">Amazon Service Partner</span>
+        <tr><td style="background:${COLORS.dark};padding:20px 32px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td width="36" style="vertical-align:middle;">
+              <span style="display:inline-block;width:36px;height:36px;background:${COLORS.orange};border-radius:50%;text-align:center;line-height:36px;font-size:19px;">&#127891;</span>
+            </td>
+            <td style="vertical-align:middle;padding-left:10px;">
+              <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.3px;">ECL <span style="color:${COLORS.orange};">Academy</span></span>
+            </td>
+            <td style="vertical-align:middle;text-align:right;">
+              <span style="color:#c9ced3;font-size:11px;">Amazon Service Partner</span>
+            </td>
+          </tr></table>
         </td></tr>
         <!-- Content -->
         <tr><td style="padding:32px;">${content}</td></tr>
