@@ -1,114 +1,32 @@
 /**
- * Integración con Evolmind / evolCampus (LMS) para matricular estudiantes.
+ * Cliente de la API de evolCampus (EvolMind).
+ * Doc oficial v26.01 — Base URL: https://api.evolcampus.com/api
  *
- * evolCampus expone una API para matricular alumnos automáticamente desde una
- * tienda online, usando una CLAVE PRIVADA. Los nombres exactos de endpoint,
- * acción y campos dependen de tu cuenta, por eso son CONFIGURABLES por entorno.
+ * Autenticación: JWT.
+ *   POST /v1/token { clientid, key } -> { token }
+ *   Las demás llamadas usan header  Authorization: Bearer <token>
  *
- * Variables de entorno (ver .env.local.example):
- *   EVOLMIND_API_URL        URL del endpoint de la API
- *   EVOLMIND_API_KEY        Clave privada de la API
- *   EVOLMIND_ACCOUNT_ID     (opcional) identificador de cuenta
- *   EVOLMIND_REQUEST_FORMAT "form" (por defecto) | "json"
- *   EVOLMIND_KEY_PARAM      nombre del parámetro de la clave (def. "key")
- *   EVOLMIND_ENROLL_ACTION  valor de la acción de matrícula (def. "subscribe")
- *   EVOLMIND_ACTION_PARAM   nombre del parámetro de acción (def. "action")
- *
- * Mapeo de campos (por si tu instancia usa otros nombres):
- *   EVOLMIND_FIELD_EMAIL    (def. "email")
- *   EVOLMIND_FIELD_NAME     (def. "name")
- *   EVOLMIND_FIELD_COURSE   (def. "course")
+ * Variables de entorno (.env.local):
+ *   EVOLMIND_API_URL    (def. https://api.evolcampus.com/api)
+ *   EVOLMIND_CLIENT_ID  identificador de cliente (int)
+ *   EVOLMIND_API_KEY    clave única de cliente
  */
 
-const cfg = {
-  url: process.env.EVOLMIND_API_URL,
-  key: process.env.EVOLMIND_API_KEY,
-  accountId: process.env.EVOLMIND_ACCOUNT_ID,
-  format: (process.env.EVOLMIND_REQUEST_FORMAT || "form") as "form" | "json",
-  keyParam: process.env.EVOLMIND_KEY_PARAM || "key",
-  actionParam: process.env.EVOLMIND_ACTION_PARAM || "action",
-  enrollAction: process.env.EVOLMIND_ENROLL_ACTION || "subscribe",
-  fieldEmail: process.env.EVOLMIND_FIELD_EMAIL || "email",
-  fieldName: process.env.EVOLMIND_FIELD_NAME || "name",
-  fieldCourse: process.env.EVOLMIND_FIELD_COURSE || "course",
-  // Creación de cursos (solo si tu instancia de evolCampus lo soporta).
-  // Desactivado por defecto: EVOLMIND_COURSE_CREATE_ENABLED=true para activar.
-  courseCreateEnabled: process.env.EVOLMIND_COURSE_CREATE_ENABLED === "true",
-  courseCreateAction: process.env.EVOLMIND_COURSE_ACTION || "addCourse",
-  fieldCourseName: process.env.EVOLMIND_FIELD_COURSE_NAME || "name",
-  fieldCourseCode: process.env.EVOLMIND_FIELD_COURSE_CODE || "code",
-};
+const BASE_URL =
+  process.env.EVOLMIND_API_URL || "https://api.evolcampus.com/api";
+const CLIENT_ID = process.env.EVOLMIND_CLIENT_ID;
+const API_KEY = process.env.EVOLMIND_API_KEY;
 
 const TIMEOUT_MS = 15000;
 const MAX_RETRIES = 2;
 
-export interface EnrollmentInput {
-  email: string;
-  name: string;
-  /** ID/código del curso en Evolmind (Course.evolmindCourseId) */
-  evolmindCourseId: string;
-  /** Referencia del pago (Stripe session id) para trazabilidad */
-  paymentReference?: string;
-}
-
-export interface EnrollmentResult {
-  success: boolean;
-  enrollmentId?: string;
-  message: string;
-  /** Respuesta cruda del proveedor (para depurar / auditar) */
-  raw?: string;
-  /** true si fue simulada por falta de configuración */
-  simulated?: boolean;
-}
-
 export function isEvolmindConfigured(): boolean {
-  return Boolean(cfg.url && cfg.key);
+  return Boolean(CLIENT_ID && API_KEY);
 }
 
-/** Construye el cuerpo de la petición según el formato configurado. */
-function buildRequest(input: EnrollmentInput): {
-  body: string;
-  headers: Record<string, string>;
-} {
-  const [firstName, ...rest] = input.name.trim().split(" ");
-  const lastName = rest.join(" ");
+// ---------- Token (JWT) con cache en memoria ----------
+let cachedToken: { value: string; expiresAt: number } | null = null;
 
-  if (cfg.format === "json") {
-    return {
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        [cfg.keyParam]: cfg.key,
-        [cfg.actionParam]: cfg.enrollAction,
-        [cfg.fieldEmail]: input.email,
-        [cfg.fieldName]: input.name,
-        firstName,
-        lastName,
-        [cfg.fieldCourse]: input.evolmindCourseId,
-        accountId: cfg.accountId,
-        reference: input.paymentReference,
-      }),
-    };
-  }
-
-  // form-urlencoded (patrón típico de evolCampus)
-  const params = new URLSearchParams();
-  params.set(cfg.keyParam, cfg.key || "");
-  params.set(cfg.actionParam, cfg.enrollAction);
-  params.set(cfg.fieldEmail, input.email);
-  params.set(cfg.fieldName, input.name);
-  params.set("firstName", firstName);
-  params.set("lastName", lastName);
-  params.set(cfg.fieldCourse, input.evolmindCourseId);
-  if (cfg.accountId) params.set("accountId", cfg.accountId);
-  if (input.paymentReference) params.set("reference", input.paymentReference);
-
-  return {
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params.toString(),
-  };
-}
-
-/** Realiza un fetch con timeout. */
 async function fetchWithTimeout(
   url: string,
   options: RequestInit
@@ -122,17 +40,148 @@ async function fetchWithTimeout(
   }
 }
 
+/** Decodifica el exp de un JWT (segundos epoch) sin verificar la firma. */
+function decodeJwtExp(token: string): number | null {
+  try {
+    const [, payload] = token.split(".");
+    const json = JSON.parse(Buffer.from(payload, "base64").toString("utf8"));
+    return typeof json.exp === "number" ? json.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getToken(): Promise<string> {
+  const now = Date.now();
+  if (cachedToken && cachedToken.expiresAt > now + 60_000) {
+    return cachedToken.value;
+  }
+
+  const res = await fetchWithTimeout(`${BASE_URL}/v1/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientid: Number(CLIENT_ID), key: API_KEY }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`[evolmind] token HTTP ${res.status}: ${await res.text()}`);
+  }
+
+  const data = await res.json();
+  const token: string = data.token || (Array.isArray(data) ? data[0] : "");
+  if (!token) throw new Error("[evolmind] token vacío en la respuesta");
+
+  const exp = decodeJwtExp(token);
+  cachedToken = {
+    value: token,
+    expiresAt: exp ? exp * 1000 : now + 50 * 60_000, // fallback 50 min
+  };
+  return token;
+}
+
+/** POST autenticado con cuerpo form-urlencoded (PHP bracket style). */
+async function apiPostForm(
+  path: string,
+  fields: Record<string, string | number | undefined>
+): Promise<any> {
+  const token = await getToken();
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(fields)) {
+    if (v !== undefined && v !== null && v !== "") params.set(k, String(v));
+  }
+
+  let lastError = "";
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}${path}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        lastError = `HTTP ${res.status}: ${text.slice(0, 300)}`;
+        if (res.status >= 500 && attempt < MAX_RETRIES) {
+          await delay(500 * (attempt + 1));
+          continue;
+        }
+        throw new Error(lastError);
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        return { raw: text };
+      }
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : "error de red";
+      if (attempt < MAX_RETRIES) {
+        await delay(500 * (attempt + 1));
+        continue;
+      }
+      throw new Error(lastError);
+    }
+  }
+  throw new Error(lastError);
+}
+
+async function apiGet(path: string): Promise<any> {
+  const token = await getToken();
+  const res = await fetchWithTimeout(`${BASE_URL}${path}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 300)}`);
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { raw: text };
+  }
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+// ============================================================
+// Matrícula de alumnos (newEnrollment)
+// ============================================================
+
+export interface EnrollmentInput {
+  email: string;
+  name: string;
+  lastname?: string;
+  /** groupid de evolCampus donde matricular (Course.evolmindGroupId) */
+  groupid?: number;
+  /** referencia externa (p.ej. id de la orden) para trazabilidad en evolCampus */
+  externalId?: string;
+  /** enviar email de bienvenida desde evolCampus (0|1) */
+  welcomeEmail?: boolean;
+}
+
+export interface EnrollmentResult {
+  success: boolean;
+  message: string;
+  enrollmentId?: string;
+  userId?: number;
+  learnerId?: number;
+  raw?: any;
+  simulated?: boolean;
+}
+
 /**
- * Matricula a un estudiante en un curso de Evolmind.
- * - Si no está configurado, simula éxito (para no bloquear en desarrollo).
- * - Reintenta ante errores transitorios (red / 5xx).
+ * Crea una matrícula en evolCampus (POST /v1/newEnrollment).
+ * Si no está configurado, simula éxito para no bloquear el flujo en desarrollo.
  */
 export async function enrollStudent(
   input: EnrollmentInput
 ): Promise<EnrollmentResult> {
   if (!isEvolmindConfigured()) {
     console.warn(
-      `[evolmind] No configurado. Matrícula simulada: ${input.email} -> ${input.evolmindCourseId}`
+      `[evolmind] No configurado. Matrícula simulada: ${input.email} (group ${input.groupid ?? "-"})`
     );
     return {
       success: true,
@@ -142,156 +191,99 @@ export async function enrollStudent(
     };
   }
 
-  const { body, headers } = buildRequest(input);
-  let lastError = "";
-
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const res = await fetchWithTimeout(cfg.url as string, {
-        method: "POST",
-        headers,
-        body,
-      });
-
-      const text = await res.text();
-
-      if (!res.ok) {
-        lastError = `HTTP ${res.status}: ${text.slice(0, 300)}`;
-        // Reintenta solo en errores del servidor (5xx)
-        if (res.status >= 500 && attempt < MAX_RETRIES) {
-          await delay(500 * (attempt + 1));
-          continue;
-        }
-        return { success: false, message: lastError, raw: text };
-      }
-
-      // Intenta extraer un id de la respuesta (JSON o texto)
-      let enrollmentId: string | undefined;
-      try {
-        const json = JSON.parse(text);
-        enrollmentId =
-          json.id || json.enrollmentId || json.subscriptionId || undefined;
-      } catch {
-        // respuesta no-JSON: la dejamos como raw
-      }
-
-      return {
-        success: true,
-        enrollmentId,
-        message: "Estudiante matriculado en Evolmind",
-        raw: text,
-      };
-    } catch (error) {
-      lastError =
-        error instanceof Error ? error.message : "Error de red desconocido";
-      if (attempt < MAX_RETRIES) {
-        await delay(500 * (attempt + 1));
-        continue;
-      }
-    }
-  }
-
-  console.error(`[evolmind] Falló tras ${MAX_RETRIES + 1} intentos: ${lastError}`);
-  return { success: false, message: lastError };
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-// ============================================================
-// Creación de cursos en evolCampus
-// ============================================================
-
-export interface CourseCreateInput {
-  /** Nombre del curso */
-  name: string;
-  /** Código sugerido (p.ej. el slug). evolCampus puede devolver otro. */
-  code: string;
-  description?: string;
-}
-
-export interface CourseCreateResult {
-  success: boolean;
-  /** Código/ID del curso en evolCampus para usar en matrículas */
-  evolmindCourseId?: string;
-  message: string;
-  raw?: string;
-  simulated?: boolean;
-}
-
-/**
- * Indica si la creación de cursos vía API está habilitada y configurada.
- * IMPORTANTE: la API pública de evolCampus está orientada a matrícula; confirma
- * con su soporte si tu cuenta expone un endpoint para crear cursos. Si no,
- * los cursos se crean en su editor y aquí solo se enlaza el código.
- */
-export function isCourseCreateEnabled(): boolean {
-  return cfg.courseCreateEnabled && isEvolmindConfigured();
-}
-
-/**
- * Crea (o registra) un curso en evolCampus y devuelve su código.
- * - Si la creación por API no está habilitada, devuelve un resultado
- *   "pendiente de enlace manual" (no falla el flujo).
- */
-export async function createCourse(
-  input: CourseCreateInput
-): Promise<CourseCreateResult> {
-  if (!isCourseCreateEnabled()) {
-    return {
-      success: false,
-      message:
-        "Creación de curso por API no habilitada. Crea el curso en evolCampus y enlaza su código manualmente.",
-      simulated: true,
-    };
-  }
-
-  const params = new URLSearchParams();
-  params.set(cfg.keyParam, cfg.key || "");
-  params.set(cfg.actionParam, cfg.courseCreateAction);
-  params.set(cfg.fieldCourseName, input.name);
-  params.set(cfg.fieldCourseCode, input.code);
-  if (input.description) params.set("description", input.description);
-  if (cfg.accountId) params.set("accountId", cfg.accountId);
+  const [firstName, ...rest] = (input.name || "").trim().split(" ");
+  const lastname = input.lastname || rest.join(" ") || firstName || "-";
 
   try {
-    const res = await fetchWithTimeout(cfg.url as string, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params.toString(),
+    const data = await apiPostForm("/v1/newEnrollment", {
+      "enroll[groupid]": input.groupid,
+      "enroll[external_id]": input.externalId,
+      "enroll[welcomeemail]": input.welcomeEmail ? 1 : 0,
+      "person[email]": input.email,
+      "person[username]": input.email,
+      "person[name]": firstName || input.email.split("@")[0],
+      "person[lastname]": lastname,
     });
-    const text = await res.text();
 
-    if (!res.ok) {
+    if (data.result === 1 || data.result === "1") {
       return {
-        success: false,
-        message: `HTTP ${res.status}: ${text.slice(0, 300)}`,
-        raw: text,
+        success: true,
+        message: data.message || "OK",
+        enrollmentId: data.enrollmentid ? String(data.enrollmentid) : undefined,
+        userId: data.userid,
+        learnerId: data.learnerid,
+        raw: data,
       };
     }
 
-    // Intenta extraer el código/id del curso de la respuesta
-    let evolmindCourseId: string | undefined = input.code;
-    try {
-      const json = JSON.parse(text);
-      evolmindCourseId =
-        json.courseId || json.code || json.id || input.code;
-    } catch {
-      // respuesta no-JSON
-    }
-
-    return {
-      success: true,
-      evolmindCourseId,
-      message: "Curso creado/registrado en evolCampus",
-      raw: text,
-    };
-  } catch (error) {
     return {
       success: false,
-      message:
-        error instanceof Error ? error.message : "Error de red desconocido",
+      message: data.message || data.error || "Respuesta no exitosa de evolCampus",
+      raw: data,
     };
+  } catch (err) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Error desconocido",
+    };
+  }
+}
+
+// ============================================================
+// Cursos y grupos (para enlazar en nuestra app)
+// ============================================================
+
+export interface EvolmindCourse {
+  id: number;
+  name: string;
+  status: "ACTIVE" | "INACTIVE";
+  subjects?: { subjectid: number; subject: string }[];
+}
+
+/** GET /v1/getCourses — lista los cursos existentes en evolCampus. */
+export async function getEvolmindCourses(): Promise<EvolmindCourse[]> {
+  const data = await apiGet("/v1/getCourses");
+  return data.courses || [];
+}
+
+export interface EvolmindGroup {
+  id: number;
+  name: string;
+  status: string;
+  type: string;
+}
+
+/** POST /v1/getCourseGroups — grupos de un curso de evolCampus. */
+export async function getEvolmindCourseGroups(
+  courseId: number,
+  status = "ACTIVE"
+): Promise<EvolmindGroup[]> {
+  const data = await apiPostForm("/v1/getCourseGroups", {
+    idCourse: courseId,
+    status,
+  });
+  return data.groups || [];
+}
+
+// ============================================================
+// Acceso directo (autologin) — para "Ir al curso"
+// ============================================================
+
+/** POST /v1/getUrlAutologin — URL de acceso directo (válida 1 día). */
+export async function getAutologinUrl(
+  userId: number,
+  opts: { groupId?: number; courseId?: number } = {}
+): Promise<string | null> {
+  if (!isEvolmindConfigured()) return null;
+  try {
+    const data = await apiPostForm("/v1/getUrlAutologin", {
+      userid: userId,
+      groupid: opts.groupId,
+      courseid: opts.courseId,
+    });
+    return data.urlautologin || null;
+  } catch (err) {
+    console.error("[evolmind] getUrlAutologin:", err);
+    return null;
   }
 }

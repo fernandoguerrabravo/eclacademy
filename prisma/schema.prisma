@@ -50,8 +50,9 @@ model Course {
   weeks            Int      @default(0)
   lessons          Int      @default(0)
   badge            String? // "bestseller" | "new" | "popular"
-  // ----- Vínculo con Evolmind / evolCampus -----
-  evolmindCourseId String? // código del curso en evolCampus (matrícula)
+  // ----- Vínculo con evolCampus -----
+  evolmindCourseId Int? // id del curso en evolCampus (getCourses)
+  evolmindGroupId  Int? // id del grupo en evolCampus (newEnrollment[groupid])
   evolmindSynced   Boolean  @default(false)
   evolmindError    String?
   active           Boolean  @default(true)
@@ -132,9 +133,11 @@ model Enrollment {
   courseId             Int
   orderId              String?
   email                String
+  studentName          String?
   status               String    @default("active")
-  // ----- Sincronización con Evolmind -----
+  // ----- Sincronización con evolCampus -----
   evolmindEnrollmentId String?
+  evolmindUserId       Int?
   evolmindSynced       Boolean   @default(false)
   evolmindError        String?
   evolmindSyncedAt     DateTime?

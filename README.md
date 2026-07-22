@@ -142,77 +142,68 @@ Páginas: `/login`, `/registro`, `/cuenta` (mis cursos e historial de compras).
 
 El webhook es **idempotente**: si la orden ya está pagada, no reprocesa.
 
-## Integración con Evolmind / evolCampus
+## Integración con evolCampus (EvolMind)
 
-La matrícula en el LMS está desacoplada y es **observable**:
+Implementada contra la **API real de evolCampus v26.01** (`https://api.evolcampus.com/api`).
 
-- Cada `Enrollment` guarda su estado de sync: `evolmindSynced`, `evolmindEnrollmentId`,
-  `evolmindError`, `evolmindSyncedAt`, `syncAttempts`.
-- El adaptador (`src/lib/evolmind.ts`) hace peticiones con **timeout y reintentos**
-  y es totalmente **configurable por entorno** (formato form/JSON, nombres de
-  parámetros y campos), para adaptarse a la API exacta de tu cuenta evolCampus.
-- Si Evolmind no está configurado, la matrícula se **simula** (no bloquea el flujo).
+- **Autenticación JWT**: `POST /v1/token` con `clientid` + `key`; el token se
+  cachea en memoria y se envía como `Authorization: Bearer <token>`.
+- **Matrícula**: `POST /v1/newEnrollment` (`person[email]`, `person[name]`,
+  `person[lastname]`, `enroll[groupid]`). Guarda `enrollmentid` y `userid`.
+- **Acceso directo**: `POST /v1/getUrlAutologin` para el botón "Ir al curso".
+- Cliente con **timeout y reintentos**. Si no está configurado, la matrícula se
+  **simula** (no bloquea el flujo en desarrollo).
+- Cada `Enrollment` guarda su estado: `evolmindSynced`, `evolmindEnrollmentId`,
+  `evolmindUserId`, `evolmindError`, `evolmindSyncedAt`, `syncAttempts`.
 
-Endpoints administrativos (protegidos con `ADMIN_TOKEN`):
+### Cursos: enlace (no creación)
+
+> **Importante:** evolCampus **no permite crear cursos por API** (se crean en su
+> editor de contenidos). El flujo correcto es **enlazar**: listar los cursos
+> reales de evolCampus (`getCourses`), elegir el `id` y el `groupid`
+> (`getCourseGroups`) del grupo donde matricular, y guardarlos en el curso local.
+
+Cada `Course` guarda `evolmindCourseId` (id del curso) y `evolmindGroupId`
+(grupo de matrícula). Un curso está **listo para matricular** cuando tiene
+`evolmindGroupId` (`evolmindSynced = true`).
+
+### Endpoints admin (protegidos con `ADMIN_TOKEN`)
 
 | Método | Ruta | Acción |
 |---|---|---|
-| POST | `/api/admin/evolmind-test` | Prueba una matrícula real sin pasar por pago |
+| GET | `/api/admin/courses` | Cursos locales con su estado de enlace |
+| POST | `/api/admin/courses` | Crea un curso (opcionalmente ya enlazado) |
+| PATCH | `/api/admin/courses` | Enlaza un curso con evolCampus (course/group id) |
+| GET | `/api/admin/evolmind-courses` | Lista cursos reales de evolCampus |
+| GET | `/api/admin/evolmind-courses?courseId=ID` | Lista grupos de un curso |
+| POST | `/api/admin/evolmind-test` | Prueba una matrícula real sin pago |
 | POST | `/api/admin/sync-enrollments` | Reintenta matrículas no sincronizadas |
 
-Ejemplo de prueba de conexión:
+Flujo de enlace de un curso:
 
 ```bash
-curl -X POST http://localhost:3000/api/admin/evolmind-test \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
+# 1. Ver los cursos reales de evolCampus
+curl /api/admin/evolmind-courses -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# 2. Ver los grupos del curso elegido (p.ej. id 50)
+curl "/api/admin/evolmind-courses?courseId=50" -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# 3. Enlazar el curso local 1 con el curso 50 / grupo 99
+curl -X PATCH /api/admin/courses -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@ecl.com","name":"Test","evolmindCourseId":"EVM-CUST-001"}'
+  -d '{"courseId":1,"evolmindCourseId":50,"evolmindGroupId":99}'
 ```
 
-### Qué necesito de tu cuenta evolCampus para finalizar
+### Qué necesito de tu cuenta evolCampus
 
-Para dejar la matrícula 100% operativa, obtén del panel de evolCampus:
+Solo dos datos para el `.env.local`:
 
-1. **URL del endpoint de la API** (`EVOLMIND_API_URL`)
-2. **Clave privada de la API** (`EVOLMIND_API_KEY`)
-3. **Formato y nombres de parámetros** de la acción de matrícula: nombre del
-   parámetro de la clave, de la acción, y de los campos (email, nombre, curso).
-4. El **código/ID de cada curso en evolCampus** → se guarda en
-   `Course.evolmindCourseId` (actualmente valores placeholder `EVM-*`).
-
-Con esos datos solo hay que completar las variables `EVOLMIND_*` en `.env.local`.
-
-## Creación de cursos y sincronización con evolCampus
-
-> **Hallazgo:** la API pública de evolCampus está orientada a **matrícula de
-> alumnos**. La creación de cursos se hace normalmente en su **editor** (el
-> contenido se construye en la plataforma). Confirma con soporte de evolCampus
-> si tu cuenta expone un endpoint para crear cursos por API.
-
-Cada `Course` guarda su estado de vínculo con evolCampus: `evolmindCourseId`,
-`evolmindSynced`, `evolmindError`. El servicio de creación soporta 3 escenarios:
-
-1. **Enlace directo** — envías `evolmindCourseId` (código ya existente en
-   evolCampus) → queda enlazado (`evolmindSynced = true`).
-2. **Creación por API** — si `EVOLMIND_COURSE_CREATE_ENABLED=true` y evolCampus
-   lo soporta, se crea el curso allí y se guarda el código devuelto.
-3. **Pendiente** — se crea en la BD y queda marcado para enlace manual.
-
-Endpoints admin (protegidos con `ADMIN_TOKEN`):
-
-| Método | Ruta | Acción |
-|---|---|---|
-| GET | `/api/admin/courses` | Lista cursos con su estado de sync |
-| POST | `/api/admin/courses` | Crea un curso (enlaza/crea en evolCampus) |
-
-Ejemplo:
-
-```bash
-curl -X POST http://localhost:3000/api/admin/courses \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"slug":"registro-marca","title":"Registro de Marca en USA","category":"Legal","icon":"fa-trademark","shortDescription":"...","description":"...","price":197,"originalPrice":297,"evolmindCourseId":"EVM-MARCA-007"}'
 ```
+EVOLMIND_CLIENT_ID=<tu clientid>
+EVOLMIND_API_KEY=<tu key>
+```
+
+Luego enlazas cada curso con su `id`/`groupid` reales usando los endpoints de arriba.
 
 ### Probar el webhook localmente
 

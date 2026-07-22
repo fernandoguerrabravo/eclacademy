@@ -22,10 +22,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const { email, name, evolmindCourseId } = await req.json();
-  if (!email || !evolmindCourseId) {
+  const { email, name, groupid } = await req.json();
+  if (!email) {
     return NextResponse.json(
-      { error: "email y evolmindCourseId son requeridos" },
+      { error: "email es requerido" },
       { status: 400 }
     );
   }
@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
   const result = await enrollStudent({
     email,
     name: name || "Test Student",
-    evolmindCourseId,
-    paymentReference: "manual-test",
+    groupid: groupid ? Number(groupid) : undefined,
+    externalId: "manual-test",
   });
 
   return NextResponse.json({

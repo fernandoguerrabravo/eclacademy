@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createCourseWithEvolmind } from "@/lib/courses-service";
+import {
+  createCourseWithEvolmind,
+  linkCourseToEvolmind,
+} from "@/lib/courses-service";
 
 /**
  * Gestión administrativa de cursos. Protegido con ADMIN_TOKEN.
@@ -36,11 +39,41 @@ export async function GET(req: NextRequest) {
       price: true,
       active: true,
       evolmindCourseId: true,
+      evolmindGroupId: true,
       evolmindSynced: true,
       evolmindError: true,
     },
   });
   return NextResponse.json({ courses });
+}
+
+// PATCH /api/admin/courses  body: { courseId, evolmindCourseId, evolmindGroupId }
+// Enlaza un curso existente con evolCampus.
+export async function PATCH(req: NextRequest) {
+  const unauthorized = authorize(req);
+  if (unauthorized) return unauthorized;
+
+  try {
+    const { courseId, evolmindCourseId, evolmindGroupId } = await req.json();
+    if (!courseId || !evolmindCourseId || !evolmindGroupId) {
+      return NextResponse.json(
+        { error: "courseId, evolmindCourseId y evolmindGroupId son requeridos" },
+        { status: 400 }
+      );
+    }
+    const course = await linkCourseToEvolmind(
+      Number(courseId),
+      Number(evolmindCourseId),
+      Number(evolmindGroupId)
+    );
+    return NextResponse.json({ course });
+  } catch (error) {
+    console.error("[admin:courses:PATCH] Error:", error);
+    return NextResponse.json(
+      { error: "Error al enlazar el curso" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -90,7 +123,8 @@ export async function POST(req: NextRequest) {
       weeks: body.weeks ? Number(body.weeks) : undefined,
       lessons: body.lessons ? Number(body.lessons) : undefined,
       badge: body.badge ?? null,
-      evolmindCourseId: body.evolmindCourseId ?? null,
+      evolmindCourseId: body.evolmindCourseId ? Number(body.evolmindCourseId) : null,
+      evolmindGroupId: body.evolmindGroupId ? Number(body.evolmindGroupId) : null,
     });
 
     return NextResponse.json({
@@ -98,7 +132,7 @@ export async function POST(req: NextRequest) {
       evolmindLinked: course.evolmindSynced,
       note: course.evolmindSynced
         ? "Curso creado y enlazado con evolCampus."
-        : "Curso creado en la BD. Pendiente de enlazar con evolCampus (crea el curso allí y actualiza evolmindCourseId).",
+        : "Curso creado en la BD. Pendiente de enlazar con evolCampus: obtén el id de curso (getCourses) y el groupid (getCourseGroups) y usa PATCH para enlazar.",
     });
   } catch (error) {
     console.error("[admin:courses:POST] Error:", error);

@@ -89,10 +89,6 @@ export async function POST(req: NextRequest) {
       cancel_url: `${siteUrl}/carrito?cancelado=1`,
       metadata: {
         orderId: order.id,
-        evolmindCourseIds: dbCourses
-          .map((c) => c.evolmindCourseId)
-          .filter(Boolean)
-          .join(","),
         courseIds: dbCourses.map((c) => c.id).join(","),
       },
     });

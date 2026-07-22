@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { enrollStudent } from "@/lib/evolmind";
 
 /**
- * Sincroniza una matrícula (Enrollment) con Evolmind y actualiza su estado.
+ * Sincroniza una matrícula (Enrollment) con evolCampus y actualiza su estado.
  * Idempotente: si ya está sincronizada, no repite la llamada.
  */
 export async function syncEnrollmentToEvolmind(enrollmentId: string) {
@@ -14,15 +14,14 @@ export async function syncEnrollmentToEvolmind(enrollmentId: string) {
   if (!enrollment) {
     return { success: false, message: "Matrícula no encontrada" };
   }
-
   if (enrollment.evolmindSynced) {
     return { success: true, message: "Ya estaba sincronizada" };
   }
 
-  // El curso debe tener un código de evolCampus para poder matricular
-  if (!enrollment.course.evolmindCourseId) {
+  // Para matricular en evolCampus se necesita el grupo (enroll[groupid]).
+  if (!enrollment.course.evolmindGroupId) {
     const message =
-      "El curso no tiene código de evolCampus (evolmindCourseId). Enlázalo primero.";
+      "El curso no está enlazado con evolCampus (falta evolmindGroupId). Enlázalo primero.";
     await prisma.enrollment.update({
       where: { id: enrollment.id },
       data: {
@@ -36,16 +35,19 @@ export async function syncEnrollmentToEvolmind(enrollmentId: string) {
 
   const result = await enrollStudent({
     email: enrollment.email,
-    name: enrollment.email.split("@")[0], // fallback si no hay nombre
-    evolmindCourseId: enrollment.course.evolmindCourseId,
-    paymentReference: enrollment.orderId ?? undefined,
+    name: enrollment.studentName || enrollment.email.split("@")[0],
+    groupid: enrollment.course.evolmindGroupId,
+    externalId: enrollment.orderId ?? undefined,
+    welcomeEmail: true,
   });
 
   await prisma.enrollment.update({
     where: { id: enrollment.id },
     data: {
       evolmindSynced: result.success,
-      evolmindEnrollmentId: result.enrollmentId ?? enrollment.evolmindEnrollmentId,
+      evolmindEnrollmentId:
+        result.enrollmentId ?? enrollment.evolmindEnrollmentId,
+      evolmindUserId: result.userId ?? enrollment.evolmindUserId,
       evolmindError: result.success ? null : result.message.slice(0, 500),
       evolmindSyncedAt: result.success ? new Date() : null,
       syncAttempts: { increment: 1 },
@@ -57,7 +59,6 @@ export async function syncEnrollmentToEvolmind(enrollmentId: string) {
 
 /**
  * Crea (si no existe) una matrícula para un usuario/invitado y la sincroniza.
- * Devuelve la matrícula actualizada.
  */
 export async function createAndSyncEnrollment(params: {
   userId: string | null;
@@ -73,12 +74,17 @@ export async function createAndSyncEnrollment(params: {
       where: {
         userId_courseId: { userId: params.userId, courseId: params.courseId },
       },
-      update: { orderId: params.orderId, status: "active" },
+      update: {
+        orderId: params.orderId,
+        status: "active",
+        studentName: params.name,
+      },
       create: {
         userId: params.userId,
         courseId: params.courseId,
         orderId: params.orderId,
         email: params.email,
+        studentName: params.name,
         status: "active",
       },
     });
@@ -88,6 +94,7 @@ export async function createAndSyncEnrollment(params: {
         courseId: params.courseId,
         orderId: params.orderId,
         email: params.email,
+        studentName: params.name,
         status: "active",
       },
     });

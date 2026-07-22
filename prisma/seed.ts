@@ -23,8 +23,6 @@ async function main() {
         weeks: course.weeks,
         lessons: course.lessons,
         badge: course.badge ?? null,
-        evolmindCourseId: course.evolmindCourseId,
-        evolmindSynced: Boolean(course.evolmindCourseId),
       },
       create: {
         id: course.id,
@@ -42,8 +40,7 @@ async function main() {
         weeks: course.weeks,
         lessons: course.lessons,
         badge: course.badge ?? null,
-        evolmindCourseId: course.evolmindCourseId,
-        evolmindSynced: Boolean(course.evolmindCourseId),
+        // evolmindCourseId/GroupId se enlazan luego desde evolCampus (getCourses)
       },
     });
     console.log(`  ✓ ${course.slug}`);

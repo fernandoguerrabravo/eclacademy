@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { createCourse, isCourseCreateEnabled } from "@/lib/evolmind";
 
 export interface CreateCourseInput {
   slug: string;
@@ -13,47 +12,31 @@ export interface CreateCourseInput {
   weeks?: number;
   lessons?: number;
   badge?: string | null;
-  /** Si ya tienes el código del curso en evolCampus, enlázalo directamente. */
-  evolmindCourseId?: string | null;
+  /** id del curso en evolCampus (getCourses) */
+  evolmindCourseId?: number | null;
+  /** id del grupo en evolCampus (getCourseGroups) para matricular */
+  evolmindGroupId?: number | null;
 }
 
 /**
- * Crea un curso en la BD y, si la creación por API está habilitada,
- * intenta crearlo también en evolCampus para obtener su código.
+ * Crea un curso en la BD y lo enlaza con evolCampus.
  *
- * Escenarios:
- *  1) evolmindCourseId provisto -> se enlaza directamente (synced=true).
- *  2) Creación por API habilitada -> se crea en evolCampus y se guarda el id.
- *  3) Ni lo uno ni lo otro -> curso creado en BD, pendiente de enlace manual.
+ * NOTA: evolCampus NO permite crear cursos por API (se crean en su editor).
+ * El flujo correcto es: crear el curso allí, y aquí enlazar su `id` y el
+ * `groupid` del grupo donde se matriculará a los alumnos.
+ *
+ * Un curso se considera "sincronizado" cuando tiene evolmindGroupId
+ * (imprescindible para poder matricular vía newEnrollment).
  */
 export async function createCourseWithEvolmind(input: CreateCourseInput) {
-  let evolmindCourseId: string | null = input.evolmindCourseId ?? null;
-  let evolmindSynced = false;
-  let evolmindError: string | null = null;
+  const evolmindGroupId = input.evolmindGroupId ?? null;
+  const evolmindCourseId = input.evolmindCourseId ?? null;
+  const evolmindSynced = Boolean(evolmindGroupId);
+  const evolmindError = evolmindSynced
+    ? null
+    : "Pendiente: enlaza el curso con evolCampus (evolmindGroupId) para poder matricular.";
 
-  if (evolmindCourseId) {
-    // Escenario 1: enlace manual directo
-    evolmindSynced = true;
-  } else if (isCourseCreateEnabled()) {
-    // Escenario 2: crear en evolCampus
-    const result = await createCourse({
-      name: input.title,
-      code: input.slug,
-      description: input.shortDescription,
-    });
-    if (result.success && result.evolmindCourseId) {
-      evolmindCourseId = result.evolmindCourseId;
-      evolmindSynced = true;
-    } else {
-      evolmindError = result.message;
-    }
-  } else {
-    // Escenario 3: pendiente de enlace manual
-    evolmindError =
-      "Pendiente: crea el curso en evolCampus y enlaza su código.";
-  }
-
-  const course = await prisma.course.create({
+  return prisma.course.create({
     data: {
       slug: input.slug,
       title: input.title,
@@ -67,46 +50,26 @@ export async function createCourseWithEvolmind(input: CreateCourseInput) {
       lessons: input.lessons ?? 0,
       badge: input.badge ?? null,
       evolmindCourseId,
+      evolmindGroupId,
       evolmindSynced,
       evolmindError,
     },
   });
-
-  return course;
 }
 
-/**
- * Reintenta crear/enlazar en evolCampus los cursos que aún no están sincronizados.
- */
-export async function retryPendingCourses() {
-  const pending = await prisma.course.findMany({
-    where: { evolmindSynced: false, active: true },
+/** Enlaza (o reenlaza) un curso existente con evolCampus. */
+export async function linkCourseToEvolmind(
+  courseId: number,
+  evolmindCourseId: number,
+  evolmindGroupId: number
+) {
+  return prisma.course.update({
+    where: { id: courseId },
+    data: {
+      evolmindCourseId,
+      evolmindGroupId,
+      evolmindSynced: true,
+      evolmindError: null,
+    },
   });
-
-  const results = [];
-  for (const c of pending) {
-    if (!isCourseCreateEnabled()) {
-      results.push({
-        courseId: c.id,
-        success: false,
-        message: "Creación por API no habilitada",
-      });
-      continue;
-    }
-    const result = await createCourse({
-      name: c.title,
-      code: c.slug,
-      description: c.shortDescription,
-    });
-    await prisma.course.update({
-      where: { id: c.id },
-      data: {
-        evolmindCourseId: result.evolmindCourseId ?? c.evolmindCourseId,
-        evolmindSynced: result.success,
-        evolmindError: result.success ? null : result.message.slice(0, 500),
-      },
-    });
-    results.push({ courseId: c.id, ...result });
-  }
-  return results;
 }
