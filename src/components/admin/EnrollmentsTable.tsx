@@ -114,41 +114,14 @@ export function EnrollmentsTable() {
                   <th>Curso</th>
                   <th>Tipo</th>
                   <th>evolCampus</th>
+                  <th>Progreso</th>
                   <th>Estado</th>
-                  <th>Fecha</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((e) => (
-                  <tr key={e.id}>
-                    <td>
-                      <strong>{e.name || "—"}</strong>
-                      <div className="admin-slug">{e.email}</div>
-                    </td>
-                    <td>{e.course}</td>
-                    <td>
-                      {e.registered ? (
-                        <span className="badge-ok"><i className="fas fa-user"></i> Cuenta</span>
-                      ) : (
-                        <span className="badge-warn"><i className="fas fa-user-clock"></i> Invitado</span>
-                      )}
-                    </td>
-                    <td>
-                      {e.evolmindSynced ? (
-                        <span className="badge-ok">
-                          <i className="fas fa-check"></i> matrícula {e.evolmindEnrollmentId}
-                        </span>
-                      ) : (
-                        <span className="badge-warn" title={e.evolmindError || ""}>
-                          <i className="fas fa-clock"></i> pendiente
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`status-pill status-${e.status}`}>{e.status}</span>
-                    </td>
-                    <td>{new Date(e.createdAt).toLocaleDateString("es")}</td>
-                  </tr>
+                  <EnrollmentRow key={e.id} e={e} />
                 ))}
               </tbody>
             </table>
@@ -156,5 +129,88 @@ export function EnrollmentsTable() {
         )}
       </section>
     </div>
+  );
+}
+
+function EnrollmentRow({ e }: { e: AdminEnrollment }) {
+  const [progress, setProgress] = useState<{ completedPercent: number; grade: number } | null>(null);
+  const [loadingP, setLoadingP] = useState(false);
+  const [extending, setExtending] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
+  async function loadProgress() {
+    setLoadingP(true);
+    try {
+      const res = await fetch(`/api/admin/enrollments/${e.id}`);
+      const data = await res.json();
+      setProgress(data.progress);
+    } finally {
+      setLoadingP(false);
+    }
+  }
+
+  async function extend() {
+    const input = prompt("¿Cuántos días ampliar el acceso?", "30");
+    if (!input) return;
+    const days = Number(input);
+    if (!days || days <= 0) return;
+    setExtending(true);
+    setNote(null);
+    try {
+      const res = await fetch(`/api/admin/enrollments/${e.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days }),
+      });
+      const data = await res.json();
+      setNote(res.ok ? `Ampliado ${days} días` : data.error || "Error");
+    } finally {
+      setExtending(false);
+    }
+  }
+
+  return (
+    <tr>
+      <td>
+        <strong>{e.name || "—"}</strong>
+        <div className="admin-slug">{e.email}</div>
+      </td>
+      <td>{e.course}</td>
+      <td>
+        {e.evolmindSynced ? (
+          <span className="badge-ok">
+            <i className="fas fa-check"></i> {e.evolmindEnrollmentId}
+          </span>
+        ) : (
+          <span className="badge-warn" title={e.evolmindError || ""}>
+            <i className="fas fa-clock"></i> pendiente
+          </span>
+        )}
+      </td>
+      <td>
+        {progress ? (
+          <span>
+            {Math.round(progress.completedPercent)}%
+            {progress.grade > 0 ? ` · ${progress.grade}` : ""}
+          </span>
+        ) : e.evolmindSynced ? (
+          <button className="link-btn" onClick={loadProgress} disabled={loadingP}>
+            {loadingP ? "..." : "Ver"}
+          </button>
+        ) : (
+          <span className="admin-muted">—</span>
+        )}
+      </td>
+      <td>
+        <span className={`status-pill status-${e.status}`}>{e.status}</span>
+      </td>
+      <td>
+        {e.evolmindSynced && (
+          <button className="link-btn" onClick={extend} disabled={extending}>
+            {extending ? "..." : note || "Ampliar"}
+          </button>
+        )}
+      </td>
+    </tr>
   );
 }

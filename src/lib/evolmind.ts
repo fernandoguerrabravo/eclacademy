@@ -376,6 +376,113 @@ export async function getEvolmindCoursesWithGroups(): Promise<
 }
 
 // ============================================================
+// Progreso de matrículas (getEnrollment / getEnrollments)
+// ============================================================
+
+export interface EnrollmentProgress {
+  completedPercent: number;
+  evaluationsCompletedPercent: number;
+  grade: number;
+  status: number; // 0 activa, 1 archivada, 2 baja, 3 solo lectura
+  lastConnect: string | null;
+  timeConnected: number; // segundos
+  connections: number;
+  begin: string | null;
+  end: string | null;
+  passRequirements: boolean;
+  diplomaUrl: string | null;
+}
+
+function parseEnroll(enroll: any): EnrollmentProgress {
+  return {
+    completedPercent: Number(enroll?.completedpercent ?? 0),
+    evaluationsCompletedPercent: Number(enroll?.evaluationscompletedpercent ?? 0),
+    grade: Number(enroll?.grade ?? 0),
+    status: Number(enroll?.enrollmentstatus ?? 0),
+    lastConnect: enroll?.lastconnect || null,
+    timeConnected: Number(enroll?.timeconnected ?? 0),
+    connections: Number(enroll?.connections ?? 0),
+    begin: enroll?.begin || null,
+    end: enroll?.end || null,
+    passRequirements: enroll?.passrequierements === 1 || enroll?.passrequierements === "1",
+    diplomaUrl: enroll?.urldiploma || null,
+  };
+}
+
+/** POST /v1/getEnrollment — datos y progreso de una matrícula. */
+export async function getEnrollmentProgress(
+  evEnrollmentId: number
+): Promise<EnrollmentProgress | null> {
+  if (!isEvolmindConfigured()) return null;
+  try {
+    const data = await apiPostForm("/v1/getEnrollment", {
+      enrollmentid: evEnrollmentId,
+    });
+    if (!data?.enroll) return null;
+    return parseEnroll(data.enroll);
+  } catch (err) {
+    console.error("[evolmind] getEnrollment:", err);
+    return null;
+  }
+}
+
+/**
+ * POST /v1/extendEnrollmentTime — amplía la fecha fin de una matrícula
+ * asíncrona, por días o hasta una fecha.
+ */
+export async function extendEnrollmentTime(
+  evEnrollmentId: number,
+  opts: { days?: number; date?: string }
+): Promise<{ success: boolean; message: string }> {
+  if (!isEvolmindConfigured()) {
+    return { success: false, message: "evolCampus no configurado" };
+  }
+  const byDays = opts.days != null;
+  try {
+    const data = await apiPostForm("/v1/extendEnrollmentTime", {
+      enrollmentid: evEnrollmentId,
+      extend_by_days: byDays ? 1 : 0,
+      extenddays: byDays ? opts.days : undefined,
+      extenddate: !byDays ? opts.date : undefined,
+    });
+    const ok = data.result === 1 || data.result === "1";
+    return { success: ok, message: data.message || (ok ? "OK" : "KO") };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : "Error" };
+  }
+}
+
+/** POST /v1/updateGroup — modifica un grupo existente. */
+export async function updateGroup(
+  groupId: number,
+  fields: {
+    name?: string;
+    daysDuration?: number;
+    startDate?: string;
+    endDate?: string;
+    classHours?: number;
+  }
+): Promise<{ success: boolean; message: string }> {
+  if (!isEvolmindConfigured()) {
+    return { success: false, message: "evolCampus no configurado" };
+  }
+  try {
+    const data = await apiPostForm("/v1/updateGroup", {
+      groupid: groupId,
+      name: fields.name,
+      days_duration: fields.daysDuration,
+      start_date: fields.startDate,
+      end_date: fields.endDate,
+      class_hours: fields.classHours,
+    });
+    const ok = data.result === 1 || data.result === "1";
+    return { success: ok, message: data.message || (ok ? "OK" : "KO") };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : "Error" };
+  }
+}
+
+// ============================================================
 // Acceso directo (autologin) — para "Ir al curso"
 // ============================================================
 

@@ -2375,3 +2375,50 @@ body {
   font-size: 0.75rem;
   margin-top: 4px;
 }
+
+/* ===== PROGRESO DE CURSO (cuenta) ===== */
+.account-course-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.course-progress {
+  margin-top: 10px;
+}
+
+.course-progress-bar {
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.course-progress-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ff9900, #febd69);
+  border-radius: 20px;
+  transition: width 0.4s ease;
+}
+
+.course-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 4px;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--amazon-teal);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0;
+  text-decoration: underline;
+}
+.link-btn:hover { color: var(--amazon-orange); }

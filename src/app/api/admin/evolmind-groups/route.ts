@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAdminRequest } from "@/lib/admin-auth";
-import { createGroup } from "@/lib/evolmind";
+import { createGroup, updateGroup } from "@/lib/evolmind";
 
 /**
  * POST /api/admin/evolmind-groups
@@ -83,6 +83,41 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("[admin:evolmind-groups] Error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Error" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/admin/evolmind-groups
+ * Modifica un grupo existente en evolCampus.
+ * Body: { groupId, name?, daysDuration?, startDate?, endDate?, classHours? }
+ */
+export async function PATCH(req: NextRequest) {
+  if (!isAdminRequest(req)) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+  try {
+    const body = await req.json();
+    const groupId = Number(body.groupId);
+    if (!groupId) {
+      return NextResponse.json({ error: "groupId requerido" }, { status: 400 });
+    }
+    const result = await updateGroup(groupId, {
+      name: body.name,
+      daysDuration: body.daysDuration ? Number(body.daysDuration) : undefined,
+      startDate: body.startDate,
+      endDate: body.endDate,
+      classHours: body.classHours ? Number(body.classHours) : undefined,
+    });
+    if (!result.success) {
+      return NextResponse.json({ error: result.message }, { status: 502 });
+    }
+    return NextResponse.json({ ok: true, message: result.message });
+  } catch (error) {
+    console.error("[admin:evolmind-groups:PATCH] Error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Error" },
       { status: 500 }
