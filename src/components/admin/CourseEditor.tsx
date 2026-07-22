@@ -219,6 +219,8 @@ export function CourseEditor({ courseId }: { courseId: number }) {
           <ListEditor value={c.audience} onChange={(v) => set("audience", v)} />
         </section>
 
+        {c.evolmindGroupId && <GroupEditor groupId={c.evolmindGroupId} />}
+
         {c.evolmindCourseId && (
           <GroupCreator
             evolmindCourseId={c.evolmindCourseId}
@@ -228,6 +230,88 @@ export function CourseEditor({ courseId }: { courseId: number }) {
         )}
       </div>
     </div>
+  );
+}
+
+function GroupEditor({ groupId }: { groupId: number }) {
+  const [name, setName] = useState("");
+  const [type, setType] = useState<"A" | "S">("A");
+  const [daysDuration, setDaysDuration] = useState(30);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    setBusy(true);
+    setNote(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/evolmind-groups", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          groupId,
+          name: name || undefined,
+          daysDuration: type === "A" && daysDuration ? daysDuration : undefined,
+          startDate: type === "S" ? startDate || undefined : undefined,
+          endDate: type === "S" ? endDate || undefined : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error");
+      setNote("Grupo actualizado en evolCampus.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="admin-section">
+      <h2>Grupo de matrícula (id {groupId})</h2>
+      <p className="admin-muted">
+        Modifica el grupo actual en evolCampus. Deja en blanco lo que no quieras cambiar.
+      </p>
+      {note && <div className="admin-alert success" style={{ marginTop: 12 }}>{note}</div>}
+      {error && <div className="admin-alert error" style={{ marginTop: 12 }}>{error}</div>}
+
+      <div className="editor-field">
+        <label>Nuevo nombre (opcional)</label>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Dejar en blanco para no cambiar" />
+      </div>
+      <div className="editor-row">
+        <div className="editor-field">
+          <label>Tipo</label>
+          <select value={type} onChange={(e) => setType(e.target.value as "A" | "S")}>
+            <option value="A">Asíncrono</option>
+            <option value="S">Síncrono</option>
+          </select>
+        </div>
+        {type === "A" ? (
+          <div className="editor-field">
+            <label>Duración (días)</label>
+            <input type="number" min={1} value={daysDuration} onChange={(e) => setDaysDuration(Number(e.target.value))} />
+          </div>
+        ) : (
+          <>
+            <div className="editor-field">
+              <label>Inicio</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div className="editor-field">
+              <label>Fin</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </div>
+          </>
+        )}
+      </div>
+      <button className="btn-primary btn-sm" onClick={save} disabled={busy}>
+        {busy ? "Guardando..." : "Actualizar grupo"}
+      </button>
+    </section>
   );
 }
 

@@ -101,6 +101,9 @@ export function AdminDashboard() {
       <div className="admin-topbar">
         <h1><i className="fas fa-gauge-high"></i> Administración</h1>
         <div className="row-actions">
+          <Link href="/admin/ventas" className="btn-outline btn-sm">
+            <i className="fas fa-chart-line"></i> Ventas
+          </Link>
           <Link href="/admin/matriculas" className="btn-outline btn-sm">
             <i className="fas fa-users"></i> Matrículas
           </Link>
