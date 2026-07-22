@@ -100,9 +100,14 @@ export function AdminDashboard() {
     <div className="admin-page">
       <div className="admin-topbar">
         <h1><i className="fas fa-gauge-high"></i> Administración</h1>
-        <button className="btn-outline btn-sm" onClick={handleLogout}>
-          Cerrar sesión
-        </button>
+        <div className="row-actions">
+          <Link href="/admin/matriculas" className="btn-outline btn-sm">
+            <i className="fas fa-users"></i> Matrículas
+          </Link>
+          <button className="btn-outline btn-sm" onClick={handleLogout}>
+            Cerrar sesión
+          </button>
+        </div>
       </div>
 
       {message && <div className="admin-alert success">{message}</div>}

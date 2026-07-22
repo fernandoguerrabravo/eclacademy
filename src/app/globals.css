@@ -2268,3 +2268,70 @@ body {
   gap: 8px;
   align-items: center;
 }
+
+/* ===== ADMIN ENROLLMENTS ===== */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+}
+
+.stat-box.ok { border-color: #bbf7d0; background: #f0fdf4; }
+.stat-box.warn { border-color: #fde68a; background: #fffbeb; }
+
+.stat-box-num {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--dark);
+}
+
+.stat-box-label {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
+.enroll-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.enroll-filters input {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.enroll-filters select {
+  padding: 9px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.status-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.status-active { background: #dcfce7; color: #166534; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
