@@ -94,7 +94,7 @@ function layout(content: string, preview = ""): string {
         <tr><td style="background:${COLORS.dark};padding:20px 32px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
             <td width="36" style="vertical-align:middle;">
-              <span style="display:inline-block;width:36px;height:36px;background:${COLORS.orange};border-radius:50%;text-align:center;line-height:36px;font-size:19px;">&#127891;</span>
+              <span style="display:inline-block;width:38px;height:38px;background:#ffffff;border-radius:50%;text-align:center;line-height:38px;font-size:20px;">&#127891;</span>
             </td>
             <td style="vertical-align:middle;padding-left:10px;">
               <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.3px;">ECL <span style="color:${COLORS.orange};">Academy</span></span>
