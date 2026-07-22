@@ -294,6 +294,62 @@ export async function getEvolmindCourseGroups(
   return data.groups || [];
 }
 
+export interface CreateGroupInput {
+  courseId: number;
+  name: string;
+  /** "A" asíncrono | "S" síncrono */
+  type: "A" | "S";
+  /** días de duración (asíncrono) */
+  daysDuration?: number;
+  /** fecha inicio (síncrono) Y-m-d */
+  startDate?: string;
+  /** fecha fin (síncrono) Y-m-d */
+  endDate?: string;
+  classHours?: number;
+}
+
+export interface CreateGroupResult {
+  success: boolean;
+  message: string;
+  groupId?: number;
+  raw?: any;
+}
+
+/**
+ * Crea un grupo asociado a un curso en evolCampus (POST /v1/newGroup).
+ * Para asíncronos requiere daysDuration; para síncronos startDate y endDate.
+ */
+export async function createGroup(
+  input: CreateGroupInput
+): Promise<CreateGroupResult> {
+  if (!isEvolmindConfigured()) {
+    return { success: false, message: "evolCampus no configurado" };
+  }
+  try {
+    const data = await apiPostForm("/v1/newGroup", {
+      courseid: input.courseId,
+      name: input.name,
+      type: input.type,
+      days_duration: input.type === "A" ? input.daysDuration : undefined,
+      start_date: input.type === "S" ? input.startDate : undefined,
+      end_date: input.type === "S" ? input.endDate : undefined,
+      class_hours: input.classHours,
+    });
+    const ok = data.result === 1 || data.result === "1";
+    return {
+      success: ok,
+      message: data.message || (ok ? "OK" : "KO"),
+      groupId: data.groupid ? Number(data.groupid) : undefined,
+      raw: data,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Error",
+    };
+  }
+}
+
 export interface EvolmindCourseWithGroups {
   id: number;
   name: string;

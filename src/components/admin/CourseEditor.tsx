@@ -218,8 +218,121 @@ export function CourseEditor({ courseId }: { courseId: number }) {
           <p className="admin-muted">Una línea por perfil.</p>
           <ListEditor value={c.audience} onChange={(v) => set("audience", v)} />
         </section>
+
+        {c.evolmindCourseId && (
+          <GroupCreator
+            evolmindCourseId={c.evolmindCourseId}
+            localCourseId={c.id}
+            onLinked={(groupId) => set("evolmindGroupId", groupId)}
+          />
+        )}
       </div>
     </div>
+  );
+}
+
+function GroupCreator({
+  evolmindCourseId,
+  localCourseId,
+  onLinked,
+}: {
+  evolmindCourseId: number;
+  localCourseId: number;
+  onLinked: (groupId: number) => void;
+}) {
+  const [name, setName] = useState("");
+  const [type, setType] = useState<"A" | "S">("A");
+  const [daysDuration, setDaysDuration] = useState(30);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [linkIt, setLinkIt] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function create() {
+    setBusy(true);
+    setResult(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/evolmind-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          evolmindCourseId,
+          name,
+          type,
+          daysDuration: type === "A" ? daysDuration : undefined,
+          startDate: type === "S" ? startDate : undefined,
+          endDate: type === "S" ? endDate : undefined,
+          linkToCourseId: linkIt ? localCourseId : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error");
+      setResult(
+        `Grupo creado en evolCampus (id ${data.groupId})${
+          data.linkedCourse ? " y enlazado como grupo de matrícula." : "."
+        }`
+      );
+      if (data.linkedCourse && data.groupId) onLinked(data.groupId);
+      setName("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="admin-section">
+      <h2>Crear grupo en evolCampus</h2>
+      <p className="admin-muted">
+        Crea una nueva convocatoria (grupo) para este curso en evolCampus.
+      </p>
+      {result && <div className="admin-alert success" style={{ marginTop: 12 }}>{result}</div>}
+      {error && <div className="admin-alert error" style={{ marginTop: 12 }}>{error}</div>}
+
+      <div className="editor-field">
+        <label>Nombre del grupo</label>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Convocatoria Marzo 2026" />
+      </div>
+      <div className="editor-row">
+        <div className="editor-field">
+          <label>Tipo</label>
+          <select value={type} onChange={(e) => setType(e.target.value as "A" | "S")}>
+            <option value="A">Asíncrono (cada alumno a su ritmo)</option>
+            <option value="S">Síncrono (fechas fijas)</option>
+          </select>
+        </div>
+        {type === "A" ? (
+          <div className="editor-field">
+            <label>Duración (días)</label>
+            <input type="number" min={1} value={daysDuration} onChange={(e) => setDaysDuration(Number(e.target.value))} />
+          </div>
+        ) : (
+          <>
+            <div className="editor-field">
+              <label>Inicio</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div className="editor-field">
+              <label>Fin</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </div>
+          </>
+        )}
+      </div>
+      <label className="admin-switch" style={{ marginBottom: 12 }}>
+        <input type="checkbox" checked={linkIt} onChange={(e) => setLinkIt(e.target.checked)} />
+        <span>Usar este grupo como destino de matrícula de este curso</span>
+      </label>
+      <div>
+        <button className="btn-primary btn-sm" onClick={create} disabled={busy || !name}>
+          {busy ? "Creando..." : "Crear grupo"}
+        </button>
+      </div>
+    </section>
   );
 }
 
