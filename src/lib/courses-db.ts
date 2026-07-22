@@ -19,6 +19,9 @@ export interface StoreCourse {
   lessons: number;
   badge: string | null;
   subjects: { subjectid: number | string; subject: string }[];
+  whatYouLearn: string[];
+  requirements: string[];
+  audience: string[];
 }
 
 function toStoreCourse(c: PrismaCourse): StoreCourse {
@@ -39,6 +42,9 @@ function toStoreCourse(c: PrismaCourse): StoreCourse {
     lessons: c.lessons,
     badge: c.badge,
     subjects: Array.isArray(c.subjects) ? (c.subjects as any) : [],
+    whatYouLearn: c.whatYouLearn ?? [],
+    requirements: c.requirements ?? [],
+    audience: c.audience ?? [],
   };
 }
 

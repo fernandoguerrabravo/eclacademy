@@ -1,65 +1,20 @@
-import { PrismaClient } from "@prisma/client";
-import { courses } from "../src/lib/courses";
-
-const prisma = new PrismaClient();
-
+/**
+ * El catálogo de cursos proviene de evolCampus (fuente de verdad).
+ * No se siembran cursos demo. Para poblar el catálogo:
+ *   1. Arranca la app y entra en /admin
+ *   2. Pulsa "Sincronizar desde evolCampus"
+ *   3. Fija precio y publica cada curso
+ *
+ * Este script queda como punto de extensión para datos base futuros
+ * (p.ej. usuario administrador, categorías, etc.).
+ */
 async function main() {
-  console.log("Sembrando cursos...");
-
-  for (const course of courses) {
-    await prisma.course.upsert({
-      where: { slug: course.slug },
-      update: {
-        title: course.title,
-        category: course.category,
-        icon: course.icon,
-        shortDescription: course.shortDescription,
-        description: course.description,
-        price: course.price,
-        originalPrice: course.originalPrice,
-        rating: course.rating,
-        reviews: course.reviews,
-        students: course.students,
-        weeks: course.weeks,
-        lessons: course.lessons,
-        badge: course.badge ?? null,
-      },
-      create: {
-        id: course.id,
-        slug: course.slug,
-        title: course.title,
-        category: course.category,
-        icon: course.icon,
-        shortDescription: course.shortDescription,
-        description: course.description,
-        price: course.price,
-        originalPrice: course.originalPrice,
-        rating: course.rating,
-        reviews: course.reviews,
-        students: course.students,
-        weeks: course.weeks,
-        lessons: course.lessons,
-        badge: course.badge ?? null,
-        // evolmindCourseId/GroupId se enlazan luego desde evolCampus (getCourses)
-      },
-    });
-    console.log(`  ✓ ${course.slug}`);
-  }
-
-  // Reajusta la secuencia de autoincremento tras insertar ids explícitos,
-  // para que los cursos creados luego (admin) no colisionen en el id.
-  await prisma.$executeRawUnsafe(
-    `SELECT setval(pg_get_serial_sequence('courses','id'), (SELECT MAX(id) FROM courses));`
+  console.log(
+    "Seed: el catálogo se importa desde evolCampus vía /admin (Sincronizar). Nada que sembrar."
   );
-
-  console.log("Seed completado.");
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

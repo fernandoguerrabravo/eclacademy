@@ -92,18 +92,48 @@ export default async function CourseDetailPage({
       {/* Layout */}
       <div className="course-detail-layout container">
         <div className="course-main">
+          {/* Lo que aprenderás */}
+          {course.whatYouLearn.length > 0 && (
+            <section className="detail-section learn-section">
+              <h2>Lo que aprenderás</h2>
+              <div className="learn-grid">
+                {course.whatYouLearn.map((item, i) => (
+                  <div className="learn-item" key={i}>
+                    <i className="fas fa-check"></i>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Requisitos */}
+          {course.requirements.length > 0 && (
+            <section className="detail-section">
+              <h2>Requisitos</h2>
+              <ul className="requirements-list">
+                {course.requirements.map((req, i) => (
+                  <li key={i}>{req}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {/* Descripción */}
           <section className="detail-section">
             <h2>Descripción</h2>
             <div className="description-content">
               <p>{course.description}</p>
-              <h3>¿Para quién es este curso?</h3>
-              <ul>
-                <li>Sellers de Amazon en LATAM que quieren expandirse a Amazon USA</li>
-                <li>Emprendedores con productos listos para exportar</li>
-                <li>Dueños de marcas que buscan ingresar al mercado estadounidense</li>
-                <li>Profesionales de comercio exterior que quieren especializarse</li>
-              </ul>
+              {course.audience.length > 0 && (
+                <>
+                  <h3>¿Para quién es este curso?</h3>
+                  <ul>
+                    {course.audience.map((a, i) => (
+                      <li key={i}>{a}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           </section>
 

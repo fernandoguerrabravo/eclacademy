@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface AdminCourse {
@@ -256,13 +257,18 @@ function CourseRow({
         </label>
       </td>
       <td>
-        <button
-          className="btn-primary btn-sm"
-          onClick={save}
-          disabled={!dirty || saving}
-        >
-          {saving ? "..." : "Guardar"}
-        </button>
+        <div className="row-actions">
+          <button
+            className="btn-primary btn-sm"
+            onClick={save}
+            disabled={!dirty || saving}
+          >
+            {saving ? "..." : "Guardar"}
+          </button>
+          <Link href={`/admin/cursos/${course.id}`} className="btn-outline btn-sm">
+            Editar
+          </Link>
+        </div>
       </td>
     </tr>
   );

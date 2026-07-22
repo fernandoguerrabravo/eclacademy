@@ -99,6 +99,15 @@ export async function PATCH(req: NextRequest) {
     if (body.lessons !== undefined) data.lessons = Number(body.lessons);
     if (body.published !== undefined) data.published = Boolean(body.published);
 
+    // Campos de marketing (listas de texto)
+    for (const f of ["whatYouLearn", "requirements", "audience"] as const) {
+      if (body[f] !== undefined) {
+        data[f] = Array.isArray(body[f])
+          ? body[f].map((s: unknown) => String(s)).filter(Boolean)
+          : [];
+      }
+    }
+
     // No se permite publicar un curso sin grupo de evolCampus (no matriculable)
     if (data.published === true) {
       const course = await prisma.course.findUnique({
