@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, isStripeConfigured } from "@/lib/stripe";
-import { getCourseById } from "@/lib/courses";
+import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/checkout
@@ -30,31 +30,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Resolver cursos desde el servidor (nunca confiar en precios del cliente)
-    const lineItems = [];
-    const enrolledCourseIds: string[] = [];
+    // Resolver cursos desde la BD (nunca confiar en precios del cliente)
+    const dbCourses = await prisma.course.findMany({
+      where: { id: { in: itemIds }, active: true },
+    });
 
-    for (const id of itemIds) {
-      const course = getCourseById(id);
-      if (!course) {
-        return NextResponse.json(
-          { error: `Curso ${id} no encontrado` },
-          { status: 400 }
-        );
-      }
-      enrolledCourseIds.push(course.evolmindCourseId);
-      lineItems.push({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: course.title,
-            description: course.shortDescription,
-          },
-          unit_amount: course.price * 100, // en centavos
-        },
-        quantity: 1,
-      });
+    if (dbCourses.length !== itemIds.length) {
+      return NextResponse.json(
+        { error: "Uno o más cursos no existen o no están disponibles" },
+        { status: 400 }
+      );
     }
+
+    const lineItems = dbCourses.map((course) => ({
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: course.title,
+          description: course.shortDescription,
+        },
+        unit_amount: course.price * 100, // en centavos
+      },
+      quantity: 1,
+    }));
+
+    const enrolledCourseIds = dbCourses.map((c) => c.evolmindCourseId);
 
     const siteUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";

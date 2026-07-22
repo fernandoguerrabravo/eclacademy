@@ -1,0 +1,63 @@
+// Prisma schema para ECL Academy
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Curso / producto que se puede comprar
+model Course {
+  id               Int        @id @default(autoincrement())
+  slug             String     @unique
+  title            String
+  category         String
+  icon             String
+  shortDescription String
+  description      String
+  price            Int // precio en USD (dólares enteros)
+  originalPrice    Int
+  rating           Float      @default(0)
+  reviews          Int        @default(0)
+  students         Int        @default(0)
+  weeks            Int        @default(0)
+  lessons          Int        @default(0)
+  badge            String? // "bestseller" | "new" | "popular"
+  evolmindCourseId String // ID del curso en Evolmind (matrícula)
+  active           Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  cartItems CartItem[]
+
+  @@map("courses")
+}
+
+/// Carrito de compras. Identificado por cookie anónima (token)
+/// hasta que exista autenticación de usuario.
+model Cart {
+  id        String     @id @default(uuid())
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     CartItem[]
+
+  @@map("carts")
+}
+
+/// Ítem dentro de un carrito. Un curso solo puede estar una vez por carrito.
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    String
+  courseId  Int
+  createdAt DateTime @default(now())
+
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, courseId])
+  @@map("cart_items")
+}

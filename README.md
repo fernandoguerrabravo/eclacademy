@@ -7,6 +7,7 @@ Construida con **Next.js 14** (App Router + TypeScript), con carrito de compras,
 ## Requisitos
 
 - Node.js 18+ (probado con Node 22)
+- PostgreSQL 14+ (local)
 - Cuenta de Stripe (modo test)
 - Instancia y credenciales de Evolmind
 
@@ -14,7 +15,38 @@ Construida con **Next.js 14** (App Router + TypeScript), con carrito de compras,
 
 ```bash
 npm install
-cp .env.local.example .env.local   # y completa las variables
+cp .env.example .env               # DATABASE_URL (Postgres)
+cp .env.local.example .env.local   # Stripe + Evolmind
+```
+
+### Base de datos (PostgreSQL local)
+
+```bash
+# 1. Crea la base de datos
+createdb ecl_academy
+
+# 2. Ajusta DATABASE_URL en .env
+#    postgresql://USUARIO@localhost:5432/ecl_academy?schema=public
+
+# 3. Aplica migraciones y genera el cliente
+npm run db:migrate
+
+# 4. Carga los cursos iniciales
+npm run db:seed
+```
+
+Comandos útiles:
+
+| Comando | Descripción |
+|---|---|
+| `npm run db:migrate` | Crea/aplica migraciones (Prisma) |
+| `npm run db:seed` | Siembra los cursos |
+| `npm run db:studio` | Abre Prisma Studio (GUI de la BD) |
+| `npm run db:reset` | Resetea la BD y re-siembra |
+
+### Arrancar
+
+```bash
 npm run dev
 ```
 
@@ -47,19 +79,44 @@ src/
     matricula/exito/page.tsx     # Confirmación de matrícula
     globals.css                  # Estilos (paleta Amazon)
     api/
+      cart/route.ts              # GET/POST/DELETE carrito (Postgres)
       courses/route.ts           # GET lista de cursos
       checkout/route.ts          # POST crea sesión de Stripe Checkout
       checkout/session/route.ts  # GET estado de una sesión
       webhooks/stripe/route.ts   # Webhook -> matrícula en Evolmind
   components/                    # Navbar, CartSidebar, CourseCard, etc.
-  context/CartContext.tsx        # Estado del carrito (localStorage)
+  context/CartContext.tsx        # Estado del carrito (sincroniza con la API)
   lib/
-    courses.ts                   # Datos de cursos
+    prisma.ts                    # Cliente Prisma (singleton)
+    cart.ts                      # Lógica de carrito (cookie + Postgres)
+    courses.ts                   # Tipos + datos base (fuente del seed)
     stripe.ts                    # Cliente Stripe
     evolmind.ts                  # Cliente Evolmind (matrículas)
+prisma/
+  schema.prisma                  # Modelos: Course, Cart, CartItem
+  seed.ts                        # Semilla de cursos
+  migrations/                    # Migraciones SQL
 public/                          # Logos (ECL, Amazon SPN)
 legacy/                          # Sitio estático original (referencia)
 ```
+
+## Carrito de compras (Postgres)
+
+- El carrito vive en la BD (tablas `carts` y `cart_items`).
+- Se identifica con una **cookie anónima** `cartId` (httpOnly, 30 días), sin
+  necesidad de login. Cuando exista autenticación, el carrito se asociará a un
+  usuario.
+- Un curso solo puede estar una vez por carrito (`@@unique([cartId, courseId])`).
+- Los precios y datos se leen **siempre desde la BD**, nunca del cliente.
+
+Endpoints:
+
+| Método | Ruta | Acción |
+|---|---|---|
+| GET | `/api/cart` | Devuelve el carrito actual |
+| POST | `/api/cart` | Agrega un curso `{ courseId }` |
+| DELETE | `/api/cart?courseId=` | Elimina un curso |
+| DELETE | `/api/cart` | Vacía el carrito |
 
 ## Flujo de compra
 

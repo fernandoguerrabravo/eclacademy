@@ -10,87 +10,119 @@ import {
 } from "react";
 
 export interface CartItem {
-  id: number;
+  id: number; // id del CartItem
+  courseId: number;
   slug: string;
   title: string;
   price: number;
   icon: string;
 }
 
-interface CartContextType {
+interface CartState {
   items: CartItem[];
-  isOpen: boolean;
-  addItem: (item: CartItem) => void;
-  removeItem: (id: number) => void;
-  clearCart: () => void;
-  openCart: () => void;
-  closeCart: () => void;
   total: number;
   count: number;
 }
 
+interface CartContextType extends CartState {
+  isOpen: boolean;
+  loading: boolean;
+  addItem: (courseId: number) => Promise<void>;
+  removeItem: (courseId: number) => Promise<void>;
+  clearCart: () => Promise<void>;
+  openCart: () => void;
+  closeCart: () => void;
+}
+
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const STORAGE_KEY = "eclCart";
-
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [state, setState] = useState<CartState>({
+    items: [],
+    total: 0,
+    count: 0,
+  });
   const [isOpen, setIsOpen] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Cargar desde localStorage al montar
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setItems(JSON.parse(stored));
-      }
-    } catch {
-      // ignore
-    }
-    setHydrated(true);
-  }, []);
-
-  // Persistir en localStorage
-  useEffect(() => {
-    if (hydrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    }
-  }, [items, hydrated]);
-
-  const addItem = useCallback((item: CartItem) => {
-    setItems((prev) => {
-      if (prev.find((i) => i.id === item.id)) {
-        return prev; // ya está en el carrito
-      }
-      return [...prev, item];
+  const applyCart = useCallback((cart: CartState) => {
+    setState({
+      items: cart.items ?? [],
+      total: cart.total ?? 0,
+      count: cart.count ?? 0,
     });
-    setIsOpen(true);
   }, []);
 
-  const removeItem = useCallback((id: number) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  }, []);
+  // Carga inicial desde el servidor
+  useEffect(() => {
+    fetch("/api/cart")
+      .then((r) => r.json())
+      .then((data) => applyCart(data.cart))
+      .catch(() => {});
+  }, [applyCart]);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const addItem = useCallback(
+    async (courseId: number) => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/cart", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseId }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          applyCart(data.cart);
+          setIsOpen(true);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [applyCart]
+  );
+
+  const removeItem = useCallback(
+    async (courseId: number) => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/cart?courseId=${courseId}`, {
+          method: "DELETE",
+        });
+        const data = await res.json();
+        if (res.ok) applyCart(data.cart);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [applyCart]
+  );
+
+  const clearCart = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/cart", { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) applyCart(data.cart);
+    } finally {
+      setLoading(false);
+    }
+  }, [applyCart]);
+
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
-
-  const total = items.reduce((sum, i) => sum + i.price, 0);
-  const count = items.length;
 
   return (
     <CartContext.Provider
       value={{
-        items,
+        ...state,
         isOpen,
+        loading,
         addItem,
         removeItem,
         clearCart,
         openCart,
         closeCart,
-        total,
-        count,
       }}
     >
       {children}

@@ -16,13 +16,7 @@ export function CourseCard({ course }: { course: Course }) {
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    addItem({
-      id: course.id,
-      slug: course.slug,
-      title: course.title,
-      price: course.price,
-      icon: course.icon,
-    });
+    addItem(course.id);
   }
 
   const fullStars = Math.floor(course.rating);

@@ -15,7 +15,7 @@ export function CartSidebar() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: items.map((i) => i.id) }),
+        body: JSON.stringify({ items: items.map((i) => i.courseId) }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -69,7 +69,7 @@ export function CartSidebar() {
                 </div>
                 <button
                   className="cart-item-remove"
-                  onClick={() => removeItem(item.id)}
+                  onClick={() => removeItem(item.courseId)}
                   aria-label={`Eliminar ${item.title}`}
                 >
                   <i className="fas fa-trash"></i>

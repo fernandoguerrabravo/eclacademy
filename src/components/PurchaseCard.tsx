@@ -14,13 +14,7 @@ export function PurchaseCard({ course }: { course: Course }) {
   );
 
   function handleAddToCart() {
-    addItem({
-      id: course.id,
-      slug: course.slug,
-      title: course.title,
-      price: course.price,
-      icon: course.icon,
-    });
+    addItem(course.id);
   }
 
   async function handleBuyNow() {
