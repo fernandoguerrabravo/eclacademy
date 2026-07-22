@@ -124,18 +124,24 @@ model OrderItem {
 
 /// Matrícula de un estudiante en un curso (tras pago exitoso).
 model Enrollment {
-  id                   String   @id @default(uuid())
+  id                   String    @id @default(uuid())
   userId               String?
   courseId             Int
   orderId              String?
   email                String
-  status               String   @default("active")
+  status               String    @default("active")
+  // ----- Sincronización con Evolmind -----
   evolmindEnrollmentId String?
-  createdAt            DateTime @default(now())
+  evolmindSynced       Boolean   @default(false)
+  evolmindError        String?
+  evolmindSyncedAt     DateTime?
+  syncAttempts         Int       @default(0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt @default(now())
 
-  user   User?   @relation(fields: [userId], references: [id])
-  course Course  @relation(fields: [courseId], references: [id])
-  order  Order?  @relation(fields: [orderId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+  order  Order? @relation(fields: [orderId], references: [id])
 
   @@unique([userId, courseId])
   @@map("enrollments")

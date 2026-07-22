@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
-import { enrollStudent } from "@/lib/evolmind";
+import { createAndSyncEnrollment } from "@/lib/enrollments";
 import type Stripe from "stripe";
 
 /**
@@ -9,7 +9,7 @@ import type Stripe from "stripe";
  * Al completarse el checkout:
  *  1. Marca la orden como PAID
  *  2. Crea las matrículas (Enrollment) en la BD
- *  3. Matricula al estudiante en Evolmind
+ *  3. Sincroniza cada matrícula con Evolmind (con estado y reintentos)
  *  4. Vacía el carrito del usuario
  *
  * Prueba local:
@@ -68,9 +68,7 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
   }
 
   // Idempotencia: si ya está pagada, no reprocesar
-  if (order.status === "PAID") {
-    return;
-  }
+  if (order.status === "PAID") return;
 
   // 1. Marca la orden como pagada
   await prisma.order.update({
@@ -78,68 +76,18 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
     data: { status: "PAID", email: email || order.email },
   });
 
-  // Mapa courseId -> evolmindCourseId
-  const courseIds = order.items.map((i) => i.courseId);
-  const courses = await prisma.course.findMany({
-    where: { id: { in: courseIds } },
-  });
-  const evolmindMap = new Map(
-    courses.map((c) => [c.id, c.evolmindCourseId])
-  );
-
   // 2 y 3. Crea matrículas y sincroniza con Evolmind
   for (const item of order.items) {
-    const evolmindCourseId = evolmindMap.get(item.courseId);
-
-    const result = await enrollStudent({
+    await createAndSyncEnrollment({
+      userId: order.userId ?? null,
+      courseId: item.courseId,
+      orderId: order.id,
       email: email || order.email,
       name,
-      evolmindCourseId: evolmindCourseId || String(item.courseId),
-      paymentReference: session.id,
     });
-
-    if (order.userId) {
-      // Usuario registrado: upsert idempotente por (userId, courseId)
-      await prisma.enrollment.upsert({
-        where: {
-          userId_courseId: {
-            userId: order.userId,
-            courseId: item.courseId,
-          },
-        },
-        update: {
-          status: "active",
-          evolmindEnrollmentId: result.enrollmentId,
-          orderId: order.id,
-        },
-        create: {
-          userId: order.userId,
-          courseId: item.courseId,
-          orderId: order.id,
-          email: email || order.email,
-          status: "active",
-          evolmindEnrollmentId: result.enrollmentId,
-        },
-      });
-    } else {
-      // Compra de invitado: crea matrícula asociada solo a la orden/email
-      await prisma.enrollment.create({
-        data: {
-          courseId: item.courseId,
-          orderId: order.id,
-          email: email || order.email,
-          status: "active",
-          evolmindEnrollmentId: result.enrollmentId,
-        },
-      });
-    }
-
-    console.log(
-      `[webhook] Matrícula curso ${item.courseId} para ${email}: ${result.message}`
-    );
   }
 
-  // 4. Vacía el carrito del usuario (si la compra es de un usuario)
+  // 4. Vacía el carrito del usuario
   if (order.userId) {
     const cart = await prisma.cart.findFirst({
       where: { userId: order.userId },

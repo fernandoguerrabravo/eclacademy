@@ -142,6 +142,46 @@ Páginas: `/login`, `/registro`, `/cuenta` (mis cursos e historial de compras).
 
 El webhook es **idempotente**: si la orden ya está pagada, no reprocesa.
 
+## Integración con Evolmind / evolCampus
+
+La matrícula en el LMS está desacoplada y es **observable**:
+
+- Cada `Enrollment` guarda su estado de sync: `evolmindSynced`, `evolmindEnrollmentId`,
+  `evolmindError`, `evolmindSyncedAt`, `syncAttempts`.
+- El adaptador (`src/lib/evolmind.ts`) hace peticiones con **timeout y reintentos**
+  y es totalmente **configurable por entorno** (formato form/JSON, nombres de
+  parámetros y campos), para adaptarse a la API exacta de tu cuenta evolCampus.
+- Si Evolmind no está configurado, la matrícula se **simula** (no bloquea el flujo).
+
+Endpoints administrativos (protegidos con `ADMIN_TOKEN`):
+
+| Método | Ruta | Acción |
+|---|---|---|
+| POST | `/api/admin/evolmind-test` | Prueba una matrícula real sin pasar por pago |
+| POST | `/api/admin/sync-enrollments` | Reintenta matrículas no sincronizadas |
+
+Ejemplo de prueba de conexión:
+
+```bash
+curl -X POST http://localhost:3000/api/admin/evolmind-test \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@ecl.com","name":"Test","evolmindCourseId":"EVM-CUST-001"}'
+```
+
+### Qué necesito de tu cuenta evolCampus para finalizar
+
+Para dejar la matrícula 100% operativa, obtén del panel de evolCampus:
+
+1. **URL del endpoint de la API** (`EVOLMIND_API_URL`)
+2. **Clave privada de la API** (`EVOLMIND_API_KEY`)
+3. **Formato y nombres de parámetros** de la acción de matrícula: nombre del
+   parámetro de la clave, de la acción, y de los campos (email, nombre, curso).
+4. El **código/ID de cada curso en evolCampus** → se guarda en
+   `Course.evolmindCourseId` (actualmente valores placeholder `EVM-*`).
+
+Con esos datos solo hay que completar las variables `EVOLMIND_*` en `.env.local`.
+
 ### Probar el webhook localmente
 
 ```bash
