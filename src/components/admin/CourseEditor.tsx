@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { IconPicker } from "@/components/admin/IconPicker";
 
 interface FullCourse {
   id: number;
@@ -124,8 +125,8 @@ export function CourseEditor({ courseId }: { courseId: number }) {
               <input value={c.category} onChange={(e) => set("category", e.target.value)} />
             </div>
             <div className="editor-field">
-              <label>Icono (Font Awesome)</label>
-              <input value={c.icon} onChange={(e) => set("icon", e.target.value)} placeholder="fa-graduation-cap" />
+              <label>Icono</label>
+              <IconPicker value={c.icon} onChange={(v) => set("icon", v)} />
             </div>
             <div className="editor-field">
               <label>Badge</label>
