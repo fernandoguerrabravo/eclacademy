@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getStoreCourses } from "@/lib/courses-db";
+import { getStoreBundles } from "@/lib/bundles-db";
 import { CourseCard } from "@/components/CourseCard";
 import { Footer } from "@/components/Footer";
 
@@ -40,6 +41,7 @@ const testimonials = [
 
 export default async function HomePage() {
   const courses = await getStoreCourses();
+  const bundles = await getStoreBundles();
   return (
     <>
       {/* Hero */}
@@ -117,6 +119,49 @@ export default async function HomePage() {
           )}
         </div>
       </section>
+
+      {/* Bundles / Paquetes */}
+      {bundles.length > 0 && (
+        <section className="bundles-section" id="paquetes">
+          <div className="container">
+            <div className="section-title-row">
+              <h2>Paquetes con descuento</h2>
+            </div>
+            <p className="section-subtitle">
+              Ahorra combinando cursos en un solo programa.
+            </p>
+            <div className="bundles-grid">
+              {bundles.map((b) => {
+                const disc =
+                  b.originalPrice > 0
+                    ? Math.round(((b.originalPrice - b.price) / b.originalPrice) * 100)
+                    : 0;
+                return (
+                  <Link key={b.id} href={`/paquetes/${b.slug}`} className="bundle-card">
+                    <div className="bundle-card-head">
+                      <span className="bundle-card-icon">
+                        <i className={`fas ${b.icon}`}></i>
+                      </span>
+                      {disc > 0 && <span className="bundle-card-disc">-{disc}%</span>}
+                    </div>
+                    <h3>{b.title}</h3>
+                    <p>{b.shortDescription}</p>
+                    <div className="bundle-card-courses">
+                      <i className="fas fa-book"></i> {b.courses.length} cursos incluidos
+                    </div>
+                    <div className="bundle-card-foot">
+                      <span className="price-current">${b.price}</span>
+                      {b.originalPrice > b.price && (
+                        <span className="price-old">${b.originalPrice}</span>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Topics */}
       <section className="topics-section">

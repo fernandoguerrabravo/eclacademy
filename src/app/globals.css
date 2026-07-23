@@ -2601,3 +2601,170 @@ body {
   color: var(--gray-700);
   white-space: nowrap;
 }
+
+/* ===== BUNDLES (tienda) ===== */
+.bundles-section {
+  padding: 48px 0;
+  background: var(--white);
+}
+
+.bundles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.bundle-card {
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 22px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+  display: block;
+}
+
+.bundle-card:hover {
+  border-color: var(--amazon-orange);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.bundle-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.bundle-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #232f3e 0%, #37475a 100%);
+  color: var(--amazon-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.bundle-card-disc {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.bundle-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 6px;
+}
+
+.bundle-card p {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin-bottom: 12px;
+}
+
+.bundle-card-courses {
+  font-size: 0.8rem;
+  color: var(--amazon-teal);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.bundle-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-100);
+}
+
+.bundle-tag {
+  display: inline-block;
+  background: rgba(255,153,0,0.15);
+  color: var(--amazon-orange);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.bundle-courses {
+  display: grid;
+  gap: 8px;
+}
+
+.bundle-course-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--dark);
+  transition: all 0.2s;
+}
+
+.bundle-course-item:hover {
+  border-color: var(--amazon-orange);
+  background: #fffbeb;
+}
+
+.bundle-course-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--amazon-dark);
+  color: var(--amazon-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bundle-course-arrow {
+  margin-left: auto;
+  color: var(--gray-300);
+  font-size: 0.8rem;
+}
+
+.bundle-savings {
+  color: #166534;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 4px 0 12px;
+}
+
+/* ===== BUNDLE COURSE PICKER (admin) ===== */
+.bundle-course-picker {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.bundle-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.bundle-pick:hover { background: var(--gray-100); }
+.bundle-pick.on { background: #fffbeb; }
+.bundle-pick em { font-style: normal; font-size: 0.75rem; }

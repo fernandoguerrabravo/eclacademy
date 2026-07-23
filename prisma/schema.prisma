@@ -68,8 +68,38 @@ model Course {
   cartItems   CartItem[]
   orderItems  OrderItem[]
   enrollments Enrollment[]
+  bundles     BundleCourse[]
 
   @@map("courses")
+}
+
+/// Paquete/bundle: varios cursos vendidos juntos a un precio.
+model Bundle {
+  id               Int            @id @default(autoincrement())
+  slug             String         @unique
+  title            String
+  shortDescription String
+  description      String
+  icon             String         @default("fa-layer-group")
+  price            Int
+  originalPrice    Int
+  published        Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  courses          BundleCourse[]
+
+  @@map("bundles")
+}
+
+/// Relación paquete <-> curso.
+model BundleCourse {
+  bundleId Int
+  courseId Int
+  bundle   Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([bundleId, courseId])
+  @@map("bundle_courses")
 }
 
 /// Carrito de compras. Anónimo (cookie) o asociado a un usuario.
