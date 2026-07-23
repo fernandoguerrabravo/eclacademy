@@ -2575,3 +2575,29 @@ body {
   background: var(--amazon-dark);
   color: var(--amazon-orange);
 }
+
+/* ===== MINI PROGRESS (admin table) ===== */
+.mini-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mini-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 20px;
+  overflow: hidden;
+  min-width: 50px;
+}
+.mini-progress-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ff9900, #febd69);
+  border-radius: 20px;
+}
+.mini-progress-label {
+  font-size: 0.75rem;
+  color: var(--gray-700);
+  white-space: nowrap;
+}

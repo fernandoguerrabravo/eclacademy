@@ -18,40 +18,57 @@ interface AdminEnrollment {
   evolmindError: string | null;
   orderId: string | null;
   createdAt: string;
+  completedPercent: number | null;
+  grade: number | null;
+  diplomaUrl: string | null;
 }
 
 interface Stats {
   total: number;
   synced: number;
   pending: number;
+  completed: number | null;
+  avgProgress: number | null;
 }
 
 export function EnrollmentsTable() {
   const router = useRouter();
   const [rows, setRows] = useState<AdminEnrollment[]>([]);
-  const [stats, setStats] = useState<Stats>({ total: 0, synced: 0, pending: 0 });
+  const [stats, setStats] = useState<Stats>({
+    total: 0,
+    synced: 0,
+    pending: 0,
+    completed: null,
+    avgProgress: null,
+  });
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"" | "true" | "false">("");
   const [loading, setLoading] = useState(true);
+  const [withProgress, setWithProgress] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (filter) params.set("synced", filter);
-    const res = await fetch(`/api/admin/enrollments?${params.toString()}`);
-    if (res.status === 401) {
-      router.push("/admin/login");
-      return;
-    }
-    const data = await res.json();
-    setRows(data.enrollments || []);
-    setStats(data.stats || { total: 0, synced: 0, pending: 0 });
-    setLoading(false);
-  }, [search, filter, router]);
+  const load = useCallback(
+    async (progress = false) => {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (filter) params.set("synced", filter);
+      if (progress) params.set("withProgress", "1");
+      const res = await fetch(`/api/admin/enrollments?${params.toString()}`);
+      if (res.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
+      const data = await res.json();
+      setRows(data.enrollments || []);
+      setStats(data.stats);
+      setWithProgress(progress);
+      setLoading(false);
+    },
+    [search, filter, router]
+  );
 
   useEffect(() => {
-    load();
+    load(false);
   }, [load]);
 
   return (
@@ -63,6 +80,9 @@ export function EnrollmentsTable() {
           </Link>{" "}
           Matrículas
         </h1>
+        <button className="btn-primary btn-sm" onClick={() => load(true)} disabled={loading}>
+          <i className="fas fa-chart-simple"></i> Cargar progreso de todos
+        </button>
       </div>
 
       <div className="admin-stats">
@@ -78,6 +98,18 @@ export function EnrollmentsTable() {
           <span className="stat-box-num">{stats.pending}</span>
           <span className="stat-box-label">Pendientes</span>
         </div>
+        {withProgress && (
+          <>
+            <div className="stat-box ok">
+              <span className="stat-box-num">{stats.completed ?? 0}</span>
+              <span className="stat-box-label">Completados</span>
+            </div>
+            <div className="stat-box">
+              <span className="stat-box-num">{stats.avgProgress ?? 0}%</span>
+              <span className="stat-box-label">Progreso medio</span>
+            </div>
+          </>
+        )}
       </div>
 
       <section className="admin-section">
@@ -88,14 +120,14 @@ export function EnrollmentsTable() {
               placeholder="Buscar por nombre o email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && load()}
+              onKeyDown={(e) => e.key === "Enter" && load(withProgress)}
             />
             <select value={filter} onChange={(e) => setFilter(e.target.value as any)}>
               <option value="">Todas</option>
               <option value="true">Sincronizadas</option>
               <option value="false">Pendientes</option>
             </select>
-            <button className="btn-outline btn-sm" onClick={load}>
+            <button className="btn-outline btn-sm" onClick={() => load(withProgress)}>
               Filtrar
             </button>
           </div>
@@ -112,7 +144,6 @@ export function EnrollmentsTable() {
                 <tr>
                   <th>Estudiante</th>
                   <th>Curso</th>
-                  <th>Tipo</th>
                   <th>evolCampus</th>
                   <th>Progreso</th>
                   <th>Estado</th>
@@ -121,7 +152,7 @@ export function EnrollmentsTable() {
               </thead>
               <tbody>
                 {rows.map((e) => (
-                  <EnrollmentRow key={e.id} e={e} />
+                  <EnrollmentRow key={`${e.id}-${e.completedPercent ?? "x"}`} e={e} />
                 ))}
               </tbody>
             </table>
@@ -133,7 +164,9 @@ export function EnrollmentsTable() {
 }
 
 function EnrollmentRow({ e }: { e: AdminEnrollment }) {
-  const [progress, setProgress] = useState<{ completedPercent: number; grade: number } | null>(null);
+  const [progress, setProgress] = useState<{ completedPercent: number; grade: number } | null>(
+    e.completedPercent !== null ? { completedPercent: e.completedPercent, grade: e.grade ?? 0 } : null
+  );
   const [loadingP, setLoadingP] = useState(false);
   const [extending, setExtending] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -163,11 +196,13 @@ function EnrollmentRow({ e }: { e: AdminEnrollment }) {
         body: JSON.stringify({ days }),
       });
       const data = await res.json();
-      setNote(res.ok ? `Ampliado ${days} días` : data.error || "Error");
+      setNote(res.ok ? `+${days} días` : data.error || "Error");
     } finally {
       setExtending(false);
     }
   }
+
+  const pct = progress?.completedPercent ?? null;
 
   return (
     <tr>
@@ -187,12 +222,16 @@ function EnrollmentRow({ e }: { e: AdminEnrollment }) {
           </span>
         )}
       </td>
-      <td>
-        {progress ? (
-          <span>
-            {Math.round(progress.completedPercent)}%
-            {progress.grade > 0 ? ` · ${progress.grade}` : ""}
-          </span>
+      <td style={{ minWidth: 120 }}>
+        {pct !== null ? (
+          <div className="mini-progress">
+            <div className="mini-progress-bar">
+              <span style={{ width: `${pct}%` }}></span>
+            </div>
+            <span className="mini-progress-label">
+              {pct}%{progress!.grade > 0 ? ` · ${progress!.grade}` : ""}
+            </span>
+          </div>
         ) : e.evolmindSynced ? (
           <button className="link-btn" onClick={loadProgress} disabled={loadingP}>
             {loadingP ? "..." : "Ver"}

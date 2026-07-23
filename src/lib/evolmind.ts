@@ -439,6 +439,51 @@ export async function getEnrollmentProgress(
   }
 }
 
+export interface EnrollmentProgressRow {
+  enrollmentId: number;
+  email: string;
+  completedPercent: number;
+  grade: number;
+  status: number;
+  lastConnect: string | null;
+  diplomaUrl: string | null;
+}
+
+/**
+ * POST /v1/getEnrollments — progreso de todas las matrículas de un grupo
+ * en una sola llamada (hasta 1000). Devuelve un mapa por enrollmentId.
+ */
+export async function getEnrollmentsByGroup(
+  groupId: number
+): Promise<Map<number, EnrollmentProgressRow>> {
+  const map = new Map<number, EnrollmentProgressRow>();
+  if (!isEvolmindConfigured()) return map;
+  try {
+    const data = await apiPostForm("/v1/getEnrollments", {
+      groupid: groupId,
+      regs_per_page: 1000,
+      page: 1,
+    });
+    const rows = data?.data || [];
+    for (const r of rows) {
+      const enrollmentId = Number(r?.person?.enrollmentid);
+      if (!enrollmentId) continue;
+      map.set(enrollmentId, {
+        enrollmentId,
+        email: r?.person?.email || "",
+        completedPercent: Number(r?.enroll?.completedpercent ?? 0),
+        grade: Number(r?.enroll?.grade ?? 0),
+        status: Number(r?.enroll?.enrollmentstatus ?? 0),
+        lastConnect: r?.enroll?.lastconnect || null,
+        diplomaUrl: r?.enroll?.urldiploma || null,
+      });
+    }
+  } catch (err) {
+    console.error("[evolmind] getEnrollments:", err);
+  }
+  return map;
+}
+
 /**
  * POST /v1/extendEnrollmentTime — amplía la fecha fin de una matrícula
  * asíncrona, por días o hasta una fecha.
