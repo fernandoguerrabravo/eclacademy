@@ -1,0 +1,74 @@
+# DigitalOcean App Platform - especificación de la app ECL Academy
+# Impórtalo en: Apps -> Create App -> (o) Edit App Spec.
+# Los valores SECRET deben completarse en el panel de DO (no se versionan aquí).
+name: ecl-academy
+region: nyc
+services:
+  - name: web
+    github:
+      repo: fernandoguerrabravo/eclacademy
+      branch: master
+      deploy_on_push: true
+    build_command: npm run build
+    run_command: npm start
+    environment_slug: node-js
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    http_port: 8080
+    routes:
+      - path: /
+    envs:
+      - key: NODE_ENV
+        scope: RUN_AND_BUILD_TIME
+        value: production
+      - key: NEXT_PUBLIC_SITE_URL
+        scope: RUN_AND_BUILD_TIME
+        value: https://eclacademy.io
+      - key: DATABASE_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+      - key: AUTH_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: ADMIN_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+      - key: STRIPE_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+      - key: STRIPE_WEBHOOK_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: EVOLMIND_API_URL
+        scope: RUN_TIME
+        value: https://api.evolcampus.com/api
+      - key: EVOLMIND_CLIENT_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: EVOLMIND_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: RESEND_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: EMAIL_FROM
+        scope: RUN_TIME
+        value: ECL Academy <no-reply@eclacademy.io>
+
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    github:
+      repo: fernandoguerrabravo/eclacademy
+      branch: master
+    build_command: npm run build
+    run_command: npx prisma migrate deploy
+    environment_slug: node-js
+    instance_size_slug: basic-xxs
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
