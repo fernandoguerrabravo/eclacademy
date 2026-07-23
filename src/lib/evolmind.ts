@@ -160,6 +160,8 @@ export interface EnrollmentInput {
   externalId?: string;
   /** enviar email de bienvenida desde evolCampus (0|1) */
   welcomeEmail?: boolean;
+  /** empresa (B2B) a la que se asigna el alumno */
+  companyId?: number;
 }
 
 export interface EnrollmentResult {
@@ -203,6 +205,7 @@ export async function enrollStudent(
       "person[username]": input.email,
       "person[name]": firstName || input.email.split("@")[0],
       "person[lastname]": lastname,
+      "person[companyid]": input.companyId,
     });
 
     if (data.result === 1 || data.result === "1") {
@@ -386,6 +389,58 @@ export async function getEvolmindCoursesWithGroups(): Promise<
 > {
   const data = await apiGet("/v1/getCoursesGroups");
   return data.courses || [];
+}
+
+// ============================================================
+// Empresas (B2B)
+// ============================================================
+
+export interface EvolmindCompany {
+  idEmpresaCliente: number;
+  sEmpresa: string;
+  sCif: string;
+}
+
+/** POST /v1/getCompaniesClient — empresas disponibles en evolCampus. */
+export async function getEvolmindCompanies(): Promise<EvolmindCompany[]> {
+  if (!isEvolmindConfigured()) return [];
+  try {
+    const data = await apiPostForm("/v1/getCompaniesClient", {});
+    return data.empresas || [];
+  } catch (err) {
+    console.error("[evolmind] getCompaniesClient:", err);
+    return [];
+  }
+}
+
+export interface CreateCompanyResult {
+  success: boolean;
+  message: string;
+  companyId?: number;
+}
+
+/** POST /v1/newCompany — crea una empresa a la que asociar alumnos. */
+export async function createCompany(params: {
+  name: string;
+  documentId?: string;
+}): Promise<CreateCompanyResult> {
+  if (!isEvolmindConfigured()) {
+    return { success: false, message: "evolCampus no configurado" };
+  }
+  try {
+    const data = await apiPostForm("/v1/newCompany", {
+      company_name: params.name,
+      documentid: params.documentId,
+    });
+    const ok = data.result === 1 || data.result === "1";
+    return {
+      success: ok,
+      message: ok ? "OK" : data.error || "KO",
+      companyId: data.companyid ? Number(data.companyid) : undefined,
+    };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : "Error" };
+  }
 }
 
 // ============================================================

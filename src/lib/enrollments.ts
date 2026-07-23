@@ -8,7 +8,7 @@ import { enrollStudent, updateEnrollmentStatus } from "@/lib/evolmind";
 export async function syncEnrollmentToEvolmind(enrollmentId: string) {
   const enrollment = await prisma.enrollment.findUnique({
     where: { id: enrollmentId },
-    include: { course: true },
+    include: { course: true, company: true },
   });
 
   if (!enrollment) {
@@ -38,6 +38,7 @@ export async function syncEnrollmentToEvolmind(enrollmentId: string) {
     name: enrollment.studentName || enrollment.email.split("@")[0],
     groupid: enrollment.course.evolmindGroupId,
     externalId: enrollment.orderId ?? undefined,
+    companyId: enrollment.company?.evolmindCompanyId ?? undefined,
     // Nosotros enviamos el correo de acceso (con nuestro diseño), no evolCampus
     welcomeEmail: false,
   });

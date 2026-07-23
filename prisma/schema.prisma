@@ -73,6 +73,20 @@ model Course {
   @@map("courses")
 }
 
+/// Empresa (B2B) a la que se asocian alumnos.
+model Company {
+  id                Int          @id @default(autoincrement())
+  name              String
+  documentId        String?
+  evolmindCompanyId Int?
+  contactEmail      String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  enrollments       Enrollment[]
+
+  @@map("companies")
+}
+
 /// Paquete/bundle: varios cursos vendidos juntos a un precio.
 model Bundle {
   id               Int            @id @default(autoincrement())
@@ -170,6 +184,7 @@ model Enrollment {
   orderId              String?
   email                String
   studentName          String?
+  companyId            Int?
   status               String    @default("active")
   // ----- Sincronización con evolCampus -----
   evolmindEnrollmentId String?
@@ -181,9 +196,10 @@ model Enrollment {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt @default(now())
 
-  user   User?  @relation(fields: [userId], references: [id])
-  course Course @relation(fields: [courseId], references: [id])
-  order  Order? @relation(fields: [orderId], references: [id])
+  user    User?    @relation(fields: [userId], references: [id])
+  course  Course   @relation(fields: [courseId], references: [id])
+  order   Order?   @relation(fields: [orderId], references: [id])
+  company Company? @relation(fields: [companyId], references: [id])
 
   @@unique([userId, courseId])
   @@map("enrollments")
