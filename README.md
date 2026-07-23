@@ -232,3 +232,55 @@ Copia el `whsec_...` que imprime a `STRIPE_WEBHOOK_SECRET`.
 - Los precios nunca se toman del cliente; se resuelven desde `src/lib/courses.ts`.
 - Las llaves viven en `.env.local` (ignorado por git).
 - El webhook valida la firma de Stripe antes de procesar.
+
+## Checklist de despliegue a producción
+
+Cuando se decida salir en vivo (eclacademy.io):
+
+**Infraestructura**
+- [ ] Base de datos PostgreSQL gestionada (Neon, Supabase, RDS, etc.)
+- [ ] `prisma migrate deploy` en el entorno de producción
+- [ ] Hosting Next.js (Vercel recomendado, o servidor propio)
+
+**Variables de entorno (producción)**
+- [ ] `DATABASE_URL` → Postgres de producción
+- [ ] `NEXT_PUBLIC_SITE_URL=https://eclacademy.io`
+- [ ] `AUTH_SECRET` → nuevo (`openssl rand -base64 32`)
+- [ ] `ADMIN_TOKEN` → nuevo (`openssl rand -hex 24`)
+- [ ] `STRIPE_SECRET_KEY` → llave **live** (`sk_live_...`)
+- [ ] `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` → `pk_live_...`
+- [ ] `STRIPE_WEBHOOK_SECRET` → del endpoint del dashboard (producción)
+- [ ] `EVOLMIND_CLIENT_ID` / `EVOLMIND_API_KEY`
+- [ ] `RESEND_API_KEY` + `EMAIL_FROM` con dominio verificado en Resend
+
+**Stripe (live)**
+- [ ] Crear webhook en el dashboard → `https://eclacademy.io/api/webhooks/stripe`
+- [ ] Eventos: `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+      `checkout.session.async_payment_failed`, `checkout.session.expired`, `charge.refunded`
+- [ ] Copiar el signing secret a `STRIPE_WEBHOOK_SECRET`
+
+**Email (Resend)**
+- [ ] Verificar dominio `eclacademy.io`
+- [ ] Ajustar `EMAIL_FROM` a `no-reply@eclacademy.io`
+
+**Contenido**
+- [ ] Crear los cursos en evolCampus (con su contenido)
+- [ ] En /admin: Sincronizar → fijar precio → publicar cada curso
+- [ ] Revisar textos, iconos y "Lo que aprenderás" de cada curso
+
+**Verificación post-deploy**
+- [ ] Compra de prueba (tarjeta real, monto bajo) → matrícula + email + acceso
+- [ ] Reembolso de prueba → baja de matrícula
+- [ ] Acceso por magic link
+- [ ] Progreso visible en /cuenta y /admin
+
+## Estado del proyecto (probado en local)
+
+Flujo completo verificado end-to-end:
+`catálogo (evolCampus) → tienda → carrito → pago Stripe → webhook → orden PAID →
+cuenta automática → email con acceso → magic link → /cuenta → autologin evolCampus →
+progreso/certificado`. Además: reembolso con baja automática, panel admin
+(catálogo, ventas, matrículas con progreso), gestión de grupos, y acceso sin contraseña.
+
+**Pendiente para analizar en producción:** bundles/paquetes, ventas B2B (empresas),
+encuestas de satisfacción.
