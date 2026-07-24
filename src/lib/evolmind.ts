@@ -219,16 +219,36 @@ export async function enrollStudent(
       };
     }
 
+    // Idempotencia: si el alumno YA está matriculado en ese grupo, lo tratamos
+    // como éxito (ya tiene acceso). Recuperamos su userId para el autologin.
+    const msg = String(data.message || data.error || "");
+    if (/matricul/i.test(msg)) {
+      const v = await verifyEmail(input.email);
+      return {
+        success: true,
+        message: "Ya estaba matriculado en evolCampus",
+        userId: v.userId,
+        raw: data,
+      };
+    }
+
     return {
       success: false,
-      message: data.message || data.error || "Respuesta no exitosa de evolCampus",
+      message: msg || "Respuesta no exitosa de evolCampus",
       raw: data,
     };
   } catch (err) {
-    return {
-      success: false,
-      message: err instanceof Error ? err.message : "Error desconocido",
-    };
+    const errMsg = err instanceof Error ? err.message : "Error desconocido";
+    // "Ya está matriculado en ese grupo" -> idempotente, ya tiene acceso
+    if (/matricul/i.test(errMsg)) {
+      const v = await verifyEmail(input.email);
+      return {
+        success: true,
+        message: "Ya estaba matriculado en evolCampus",
+        userId: v.userId,
+      };
+    }
+    return { success: false, message: errMsg };
   }
 }
 
@@ -258,6 +278,27 @@ export async function updateEnrollmentStatus(
       success: false,
       message: err instanceof Error ? err.message : "Error",
     };
+  }
+}
+
+/**
+ * POST /v1/verifyEmail — verifica si existe un usuario con ese email.
+ * Devuelve el id de usuario de evolCampus si existe.
+ */
+export async function verifyEmail(
+  email: string
+): Promise<{ exists: boolean; userId?: number; name?: string }> {
+  if (!isEvolmindConfigured()) return { exists: false };
+  try {
+    const data = await apiPostForm("/v1/verifyEmail", { user: email });
+    const exists = data.status === 1 || data.status === "1";
+    return {
+      exists,
+      userId: data.iduser ? Number(data.iduser) : undefined,
+      name: data.name,
+    };
+  } catch {
+    return { exists: false };
   }
 }
 

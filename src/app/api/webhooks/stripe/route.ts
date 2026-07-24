@@ -7,6 +7,7 @@ import {
 } from "@/lib/enrollments";
 import { findOrCreateUser, createMagicToken } from "@/lib/auth";
 import { sendEmail, enrollmentEmail, refundEmail } from "@/lib/email";
+import { markDiscountUsed } from "@/lib/discounts";
 import type Stripe from "stripe";
 
 /**
@@ -116,6 +117,11 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
       name,
     });
     courseTitles.push(item.title);
+  }
+
+  // Marca el código de descuento como usado (un solo uso)
+  if (order.discountCode) {
+    await markDiscountUsed(order.discountCode, buyerEmail, order.id);
   }
 
   // Vacía el carrito del usuario

@@ -73,6 +73,24 @@ model Course {
   @@map("courses")
 }
 
+/// Código de descuento por porcentaje (de un solo uso por defecto).
+model DiscountCode {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  percent     Int // 1-100
+  maxUses     Int       @default(1)
+  usedCount   Int       @default(0)
+  active      Boolean   @default(true)
+  campaign    String? // etiqueta para agrupar (opcional)
+  expiresAt   DateTime?
+  usedByEmail String?
+  usedAt      DateTime?
+  orderId     String?
+  createdAt   DateTime  @default(now())
+
+  @@map("discount_codes")
+}
+
 /// Empresa (B2B) a la que se asocian alumnos.
 model Company {
   id                Int          @id @default(autoincrement())
@@ -149,7 +167,10 @@ model Order {
   userId          String?
   email           String
   status          OrderStatus @default(PENDING)
-  total           Int // total en USD
+  total           Int // total en USD (ya con descuento aplicado)
+  subtotal        Int? // total antes de descuento
+  discountCode    String?
+  discountPercent Int?
   currency        String      @default("usd")
   stripeSessionId String?     @unique
   createdAt       DateTime    @default(now())

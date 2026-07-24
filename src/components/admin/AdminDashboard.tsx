@@ -107,6 +107,9 @@ export function AdminDashboard() {
           <Link href="/admin/empresas" className="btn-outline btn-sm">
             <i className="fas fa-building"></i> Empresas
           </Link>
+          <Link href="/admin/descuentos" className="btn-outline btn-sm">
+            <i className="fas fa-ticket"></i> Descuentos
+          </Link>
           <Link href="/admin/ventas" className="btn-outline btn-sm">
             <i className="fas fa-chart-line"></i> Ventas
           </Link>

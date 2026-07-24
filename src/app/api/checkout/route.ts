@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe, isStripeConfigured } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { validateDiscount, applyPercent } from "@/lib/discounts";
 
 /**
  * POST /api/checkout
@@ -51,7 +52,24 @@ export async function POST(req: NextRequest) {
     const customerEmail: string | undefined =
       session?.email || body.customerEmail;
 
-    const total = dbCourses.reduce((sum, c) => sum + c.price, 0);
+    const subtotal = dbCourses.reduce((sum, c) => sum + c.price, 0);
+
+    // Validar código de descuento (si viene)
+    let discountPercent = 0;
+    let discountCode: string | null = null;
+    if (body.code) {
+      const v = await validateDiscount(String(body.code));
+      if (!v.valid) {
+        return NextResponse.json(
+          { error: v.reason || "Código de descuento no válido" },
+          { status: 400 }
+        );
+      }
+      discountPercent = v.percent || 0;
+      discountCode = String(body.code).trim().toUpperCase();
+    }
+
+    const total = applyPercent(subtotal, discountPercent);
 
     // Crea la orden PENDING con snapshot de precios
     const order = await prisma.order.create({
@@ -59,7 +77,10 @@ export async function POST(req: NextRequest) {
         userId: session?.userId,
         email: customerEmail || "",
         status: "PENDING",
+        subtotal,
         total,
+        discountCode,
+        discountPercent: discountPercent || null,
         items: {
           create: dbCourses.map((c) => ({
             courseId: c.id,
@@ -77,7 +98,7 @@ export async function POST(req: NextRequest) {
           name: course.title,
           description: course.shortDescription,
         },
-        unit_amount: course.price * 100,
+        unit_amount: applyPercent(course.price, discountPercent) * 100,
       },
       quantity: 1,
     }));
@@ -95,6 +116,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         orderId: order.id,
         courseIds: dbCourses.map((c) => c.id).join(","),
+        discountCode: discountCode || "",
       },
     });
 

@@ -29,8 +29,15 @@ export async function sendEmail(input: SendEmailInput): Promise<boolean> {
     console.log(
       `\n[email:DEV] Para: ${input.to}\n[email:DEV] Asunto: ${input.subject}` +
         (links.length ? `\n[email:DEV] Enlaces:\n${links.map((l) => "  " + l).join("\n")}` : "") +
-        `\n[email:DEV] (configura RESEND_API_KEY para envío real)\n`
+        `\n[email:DEV] Buzón: http://localhost:3000/dev/mailbox\n`
     );
+    // Guarda en el buzón de desarrollo para verlo renderizado
+    try {
+      const { saveDevEmail } = await import("@/lib/dev-mailbox");
+      saveDevEmail(input);
+    } catch {
+      // ignore
+    }
     return true;
   }
   try {
