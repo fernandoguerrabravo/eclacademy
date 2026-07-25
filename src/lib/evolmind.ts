@@ -351,6 +351,12 @@ export async function getEvolmindCourseGroups(
   }));
 }
 
+export interface Staff {
+  email: string;
+  name: string;
+  surname: string;
+}
+
 export interface CreateGroupInput {
   courseId: number;
   name: string;
@@ -363,6 +369,30 @@ export interface CreateGroupInput {
   /** fecha fin (síncrono) Y-m-d */
   endDate?: string;
   classHours?: number;
+  /** coordinador del grupo */
+  coordinator?: Staff;
+  /** profesores/relatores del grupo */
+  teachers?: Staff[];
+}
+
+/** Construye los campos de coordinador y profesores (bracket style). */
+function staffFields(
+  fields: Record<string, string | number | undefined>,
+  coordinator?: Staff,
+  teachers?: Staff[]
+) {
+  if (coordinator?.email) {
+    fields["coordinator[email]"] = coordinator.email;
+    fields["coordinator[name]"] = coordinator.name;
+    fields["coordinator[surname]"] = coordinator.surname;
+  }
+  (teachers || [])
+    .filter((t) => t.email)
+    .forEach((t, i) => {
+      fields[`teacher[${i}][email]`] = t.email;
+      fields[`teacher[${i}][name]`] = t.name;
+      fields[`teacher[${i}][surname]`] = t.surname;
+    });
 }
 
 export interface CreateGroupResult {
@@ -383,7 +413,7 @@ export async function createGroup(
     return { success: false, message: "evolCampus no configurado" };
   }
   try {
-    const data = await apiPostForm("/v1/newGroup", {
+    const fields: Record<string, string | number | undefined> = {
       courseid: input.courseId,
       name: input.name,
       type: input.type,
@@ -391,7 +421,9 @@ export async function createGroup(
       start_date: input.type === "S" ? input.startDate : undefined,
       end_date: input.type === "S" ? input.endDate : undefined,
       class_hours: input.classHours,
-    });
+    };
+    staffFields(fields, input.coordinator, input.teachers);
+    const data = await apiPostForm("/v1/newGroup", fields);
     const ok = data.result === 1 || data.result === "1";
     return {
       success: ok,
@@ -615,20 +647,24 @@ export async function updateGroup(
     startDate?: string;
     endDate?: string;
     classHours?: number;
+    coordinator?: Staff;
+    teachers?: Staff[];
   }
 ): Promise<{ success: boolean; message: string }> {
   if (!isEvolmindConfigured()) {
     return { success: false, message: "evolCampus no configurado" };
   }
   try {
-    const data = await apiPostForm("/v1/updateGroup", {
+    const payload: Record<string, string | number | undefined> = {
       groupid: groupId,
       name: fields.name,
       days_duration: fields.daysDuration,
       start_date: fields.startDate,
       end_date: fields.endDate,
       class_hours: fields.classHours,
-    });
+    };
+    staffFields(payload, fields.coordinator, fields.teachers);
+    const data = await apiPostForm("/v1/updateGroup", payload);
     const ok = data.result === 1 || data.result === "1";
     return { success: ok, message: data.message || (ok ? "OK" : "KO") };
   } catch (err) {

@@ -53,6 +53,10 @@ export async function POST(req: NextRequest) {
       startDate: body.startDate,
       endDate: body.endDate,
       classHours: body.classHours ? Number(body.classHours) : undefined,
+      coordinator: body.coordinator?.email ? body.coordinator : undefined,
+      teachers: Array.isArray(body.teachers)
+        ? body.teachers.filter((t: any) => t?.email)
+        : undefined,
     });
 
     if (!result.success) {
@@ -111,6 +115,10 @@ export async function PATCH(req: NextRequest) {
       startDate: body.startDate,
       endDate: body.endDate,
       classHours: body.classHours ? Number(body.classHours) : undefined,
+      coordinator: body.coordinator?.email ? body.coordinator : undefined,
+      teachers: Array.isArray(body.teachers)
+        ? body.teachers.filter((t: any) => t?.email)
+        : undefined,
     });
     if (!result.success) {
       return NextResponse.json({ error: result.message }, { status: 502 });

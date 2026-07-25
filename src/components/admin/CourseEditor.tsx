@@ -477,6 +477,8 @@ function GroupCreateForm({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [linkIt, setLinkIt] = useState(true);
+  const [coordinator, setCoordinator] = useState({ email: "", name: "", surname: "" });
+  const [teachers, setTeachers] = useState<{ email: string; name: string; surname: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -495,6 +497,8 @@ function GroupCreateForm({
           startDate: type === "S" ? startDate : undefined,
           endDate: type === "S" ? endDate : undefined,
           linkToCourseId: linkIt ? localCourseId : undefined,
+          coordinator: coordinator.email ? coordinator : undefined,
+          teachers: teachers.filter((t) => t.email),
         }),
       });
       const data = await res.json();
@@ -540,12 +544,74 @@ function GroupCreateForm({
           </>
         )}
       </div>
-      <label className="admin-switch" style={{ marginBottom: 12 }}>
+      <StaffFields
+        coordinator={coordinator}
+        setCoordinator={setCoordinator}
+        teachers={teachers}
+        setTeachers={setTeachers}
+      />
+
+      <label className="admin-switch" style={{ marginBottom: 12, marginTop: 12 }}>
         <input type="checkbox" checked={linkIt} onChange={(e) => setLinkIt(e.target.checked)} />
         <span>Usar este grupo como destino de matrícula</span>
       </label>
       <button className="btn-primary btn-sm" onClick={create} disabled={busy || !name}>
         {busy ? "Creando..." : "Crear grupo"}
+      </button>
+    </div>
+  );
+}
+
+interface Person {
+  email: string;
+  name: string;
+  surname: string;
+}
+
+function StaffFields({
+  coordinator,
+  setCoordinator,
+  teachers,
+  setTeachers,
+}: {
+  coordinator: Person;
+  setCoordinator: (p: Person) => void;
+  teachers: Person[];
+  setTeachers: (t: Person[]) => void;
+}) {
+  function updTeacher(i: number, field: keyof Person, value: string) {
+    setTeachers(teachers.map((t, idx) => (idx === i ? { ...t, [field]: value } : t)));
+  }
+  return (
+    <div style={{ marginTop: 16, borderTop: "1px solid var(--gray-100)", paddingTop: 12 }}>
+      <label style={{ fontSize: "0.85rem", fontWeight: 700, display: "block", marginBottom: 8 }}>
+        Coordinador (opcional)
+      </label>
+      <div className="editor-row">
+        <div className="editor-field">
+          <input placeholder="Email" value={coordinator.email} onChange={(e) => setCoordinator({ ...coordinator, email: e.target.value })} />
+        </div>
+        <div className="editor-field">
+          <input placeholder="Nombre" value={coordinator.name} onChange={(e) => setCoordinator({ ...coordinator, name: e.target.value })} />
+        </div>
+        <div className="editor-field">
+          <input placeholder="Apellidos" value={coordinator.surname} onChange={(e) => setCoordinator({ ...coordinator, surname: e.target.value })} />
+        </div>
+      </div>
+
+      <label style={{ fontSize: "0.85rem", fontWeight: 700, display: "block", margin: "8px 0" }}>
+        Profesores / relatores (opcional)
+      </label>
+      {teachers.map((t, i) => (
+        <div className="editor-row" key={i} style={{ marginBottom: 6 }}>
+          <div className="editor-field"><input placeholder="Email" value={t.email} onChange={(e) => updTeacher(i, "email", e.target.value)} /></div>
+          <div className="editor-field"><input placeholder="Nombre" value={t.name} onChange={(e) => updTeacher(i, "name", e.target.value)} /></div>
+          <div className="editor-field"><input placeholder="Apellidos" value={t.surname} onChange={(e) => updTeacher(i, "surname", e.target.value)} /></div>
+          <button className="link-btn" onClick={() => setTeachers(teachers.filter((_, idx) => idx !== i))} style={{ color: "#b91c1c" }}>Quitar</button>
+        </div>
+      ))}
+      <button className="link-btn" onClick={() => setTeachers([...teachers, { email: "", name: "", surname: "" }])}>
+        + Añadir profesor
       </button>
     </div>
   );
