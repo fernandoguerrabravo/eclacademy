@@ -1,35 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
 export function CartSidebar() {
   const { items, isOpen, closeCart, removeItem, total } = useCart();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleCheckout() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: items.map((i) => i.courseId) }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Error al iniciar el pago");
-      }
-      if (data.url) {
-        window.location.href = data.url; // redirige a Stripe Checkout
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <>
@@ -81,23 +56,21 @@ export function CartSidebar() {
 
         {items.length > 0 && (
           <div className="cart-footer">
-            {error && (
-              <p style={{ color: "#b91c1c", fontSize: "0.8rem", marginBottom: 8 }}>
-                {error}
-              </p>
-            )}
             <div className="cart-total">
               <span>Total:</span>
               <span>${total}</span>
             </div>
-            <button
+            <Link
+              href="/carrito"
               className="btn-primary btn-lg btn-full"
-              onClick={handleCheckout}
-              disabled={loading}
+              onClick={closeCart}
+              style={{ textAlign: "center" }}
             >
-              {loading ? "Procesando..." : "Proceder al Pago"}{" "}
-              <i className="fas fa-lock"></i>
-            </button>
+              Ver carrito y pagar <i className="fas fa-arrow-right"></i>
+            </Link>
+            <p style={{ fontSize: "0.75rem", color: "var(--gray-500)", textAlign: "center", marginTop: 8 }}>
+              Aplica tu cupón de descuento en el siguiente paso
+            </p>
           </div>
         )}
       </div>
