@@ -29,3 +29,6 @@ next-env.d.ts
 
 # dev mailbox (correos de desarrollo/demo)
 /.devmail
+
+# volcados del explorador de scraping evolCampus (pueden contener HTML/capturas del panel)
+/scripts/.evol-dump

@@ -55,7 +55,8 @@ model Course {
   evolmindGroupId  Int? // id del grupo en evolCampus (newEnrollment[groupid])
   evolmindSynced   Boolean  @default(false)
   evolmindError    String?
-  subjects         Json? // asignaturas del curso en evolCampus
+  subjects         Json? // asignaturas del curso en evolCampus (sincronizado, solo lectura)
+  curriculum       Json? // temario gestionado en NUESTRO admin (editable). Si existe, se muestra en la tienda en vez de subjects.
   // ----- Comercio / presentación (gestionado en nuestra plataforma) -----
   whatYouLearn     String[] @default([]) // "Lo que aprenderás"
   requirements     String[] @default([]) // requisitos

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { syncCoursesFromEvolmind } from "@/lib/courses-sync";
 import { isAdminRequest } from "@/lib/admin-auth";
+
+export const dynamic = "force-dynamic";
 
 /**
  * Gestión de cursos. evolCampus es la fuente de verdad del catálogo.
@@ -118,6 +121,19 @@ export async function PATCH(req: NextRequest) {
       if (body[f] !== undefined) {
         data[f] = Array.isArray(body[f])
           ? body[f].map((s: unknown) => String(s)).filter(Boolean)
+          : [];
+      }
+    }
+
+    // Temario local (curriculum): lista de títulos gestionada en nuestro admin.
+    //  - array []  -> temario gestionado (incluso vacío): NO cae a evolCampus.
+    //  - null      -> "restablecer": vuelve a mostrar el temario de evolCampus.
+    if (body.curriculum !== undefined) {
+      if (body.curriculum === null) {
+        data.curriculum = Prisma.DbNull;
+      } else {
+        data.curriculum = Array.isArray(body.curriculum)
+          ? body.curriculum.map((s: unknown) => String(s).trim()).filter(Boolean)
           : [];
       }
     }

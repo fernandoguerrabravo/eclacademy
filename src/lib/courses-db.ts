@@ -24,6 +24,25 @@ export interface StoreCourse {
   audience: string[];
 }
 
+/**
+ * Resuelve el temario a mostrar en la tienda:
+ *  - Si el curso tiene `curriculum` local (gestionado en el admin), se usa ese.
+ *  - Si no, se cae a las asignaturas sincronizadas de evolCampus (`subjects`).
+ * En ambos casos devuelve la forma { subjectid, subject }.
+ */
+function resolveCurriculum(
+  c: PrismaCourse
+): { subjectid: number | string; subject: string }[] {
+  // Distinguir "nunca gestionado" (null -> fallback a evolCampus) de
+  // "gestionado, posiblemente vacío" (array -> se respeta tal cual, incluso []).
+  if (Array.isArray(c.curriculum)) {
+    return (c.curriculum as unknown[])
+      .map((s, i) => ({ subjectid: i, subject: String(s) }))
+      .filter((s) => s.subject.trim().length > 0);
+  }
+  return Array.isArray(c.subjects) ? (c.subjects as any) : [];
+}
+
 function toStoreCourse(c: PrismaCourse): StoreCourse {
   return {
     id: c.id,
@@ -41,7 +60,7 @@ function toStoreCourse(c: PrismaCourse): StoreCourse {
     weeks: c.weeks,
     lessons: c.lessons,
     badge: c.badge,
-    subjects: Array.isArray(c.subjects) ? (c.subjects as any) : [],
+    subjects: resolveCurriculum(c),
     whatYouLearn: c.whatYouLearn ?? [],
     requirements: c.requirements ?? [],
     audience: c.audience ?? [],

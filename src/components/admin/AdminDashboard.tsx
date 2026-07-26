@@ -25,11 +25,15 @@ export function AdminDashboard() {
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newCourseName, setNewCourseName] = useState("");
+  const [newCourseSubjects, setNewCourseSubjects] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const loadCourses = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/courses");
+      const res = await fetch("/api/admin/courses", { cache: "no-store" });
       if (res.status === 401) {
         router.push("/admin/login");
         return;
@@ -71,6 +75,43 @@ export function AdminDashboard() {
       flash(err instanceof Error ? err.message : "Error", true);
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function handleCreateCourse() {
+    const name = newCourseName.trim();
+    if (!name) return;
+    const subjects = newCourseSubjects
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    setCreating(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/courses/create-evolmind", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, subjects }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al crear el curso");
+      const subjNote =
+        subjects.length > 0
+          ? ` con ${data.subjectsCreated ?? 0}/${subjects.length} asignaturas`
+          : "";
+      flash(
+        data.courseId
+          ? `Curso creado en evolCampus (id ${data.courseId})${subjNote} y sincronizado.`
+          : "Curso enviado a evolCampus. Verifica en el panel."
+      );
+      setNewCourseName("");
+      setNewCourseSubjects("");
+      setShowCreate(false);
+      await loadCourses();
+    } catch (err) {
+      flash(err instanceof Error ? err.message : "Error", true);
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -136,6 +177,12 @@ export function AdminDashboard() {
               <i className="fas fa-rotate"></i> Reintentar matrículas
             </button>
             <button
+              className="btn-outline btn-sm"
+              onClick={() => setShowCreate((v) => !v)}
+            >
+              <i className="fas fa-plus"></i> Crear curso en evolCampus
+            </button>
+            <button
               className="btn-primary btn-sm"
               onClick={handleSync}
               disabled={syncing}
@@ -145,6 +192,67 @@ export function AdminDashboard() {
             </button>
           </div>
         </div>
+
+        {showCreate && (
+          <div className="create-course-box">
+            <div className="create-course-row">
+              <input
+                type="text"
+                placeholder="Nombre del nuevo curso"
+                value={newCourseName}
+                onChange={(e) => setNewCourseName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateCourse()}
+                disabled={creating}
+              />
+              <button
+                className="btn-primary btn-sm"
+                onClick={handleCreateCourse}
+                disabled={creating || !newCourseName.trim()}
+              >
+                {creating ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i> Creando en evolCampus...
+                  </>
+                ) : (
+                  <>Crear</>
+                )}
+              </button>
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <label
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                Asignaturas / temario (opcional, una por línea)
+              </label>
+              <textarea
+                rows={4}
+                placeholder={"Módulo 1 - Introducción\nMódulo 2 - Regulaciones FDA\nMódulo 3 - Logística"}
+                value={newCourseSubjects}
+                onChange={(e) => setNewCourseSubjects(e.target.value)}
+                disabled={creating}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 8,
+                  fontSize: "0.9rem",
+                  fontFamily: "inherit",
+                  resize: "vertical",
+                }}
+              />
+            </div>
+            <p className="admin-muted" style={{ marginTop: 8 }}>
+              Crea el curso en evolCampus (vía automatización del panel), añade
+              las asignaturas indicadas y lo sincroniza aquí. Luego podrás fijar
+              precio, crear un grupo y publicarlo. Herramienta local por ahora.
+            </p>
+          </div>
+        )}
 
         {loading ? (
           <p>Cargando...</p>

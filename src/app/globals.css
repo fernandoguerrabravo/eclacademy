@@ -2021,6 +2021,235 @@ body {
   color: var(--amazon-orange);
 }
 
+/* Caja de acceso directo a evolCampus (admin) */
+.evol-access-box {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.evol-access-main label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--dark);
+  margin-bottom: 10px;
+}
+
+.evol-access-main label i {
+  color: var(--amazon-orange);
+}
+
+.evol-access-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.evol-access-row input {
+  flex: 1;
+  min-width: 240px;
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.evol-access-row input:focus {
+  outline: none;
+  border-color: var(--amazon-orange);
+}
+
+.evol-access-error {
+  display: block;
+  margin-top: 8px;
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Editor de temario local en el editor de curso */
+.curriculum-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.curriculum-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: #fff;
+}
+
+.curriculum-num {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--amazon-orange);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.curriculum-text {
+  flex: 1;
+  font-size: 0.92rem;
+  color: var(--dark);
+}
+
+.curriculum-edit-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--amazon-orange);
+  border-radius: 6px;
+  font-size: 0.92rem;
+}
+
+.curriculum-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.15s;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: var(--dark);
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.icon-btn.danger:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.curriculum-add {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.curriculum-add input {
+  flex: 1;
+  min-width: 220px;
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.curriculum-add input:focus {
+  outline: none;
+  border-color: var(--amazon-orange);
+}
+
+.curriculum-status {
+  font-size: 0.82rem;
+  color: #166534;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+
+/* Panel de asignaturas de evolCampus (archivar) */
+.evol-subj-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.evol-subj-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.evol-subj-name {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.evol-subj-note {
+  font-size: 0.8rem;
+  color: #6b7280;
+  width: 100%;
+}
+
+/* Caja "Crear curso en evolCampus" (admin dashboard) */
+.create-course-box {
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 16px;
+  margin: 12px 0 4px;
+}
+
+.create-course-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.create-course-row input {
+  flex: 1;
+  min-width: 240px;
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.create-course-row input:focus {
+  outline: none;
+  border-color: var(--amazon-orange);
+}
+
+.row-note {
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
+
 .admin-alert {
   padding: 12px 16px;
   border-radius: 8px;

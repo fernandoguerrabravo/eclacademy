@@ -1,0 +1,18 @@
+{
+  "_comment": "Selectores REALES descubiertos del panel evolCampus (v2026). El scraper (src/lib/evolcampus-scraper.ts) ya implementa este flujo; este archivo queda como documentación/override.",
+  "login": {
+    "mode": "autologin",
+    "adminEmailEnv": "EVOLCAMPUS_ADMIN_EMAIL",
+    "landing": "https://gestionv1-c175427.evolcampus.com/gestion/index.php"
+  },
+  "courseCreate": {
+    "coursesModuleUrl": "/gestion/cursos/",
+    "spaIframe": "#iframe-new-front (src /em/courses/courses)",
+    "newButton": ".new-button",
+    "menuCrearCurso": ".base-dropdown-list-item__button:has-text(\"Crear curso\")",
+    "nameInput": "getByLabel(\"Nombre del curso\")",
+    "editionInput": "getByLabel(\"Edición (opcional)\")",
+    "submit": ".base-button.primary:has-text(\"Crear curso\")",
+    "createdIdFrom": "url (/em/courses/courses/{id}/config) o API getCourses por nombre"
+  }
+}

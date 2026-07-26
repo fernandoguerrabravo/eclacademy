@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { EvolmindAccessBox } from "./EvolmindAccessBox";
 
 interface AdminEnrollment {
   id: string;
@@ -84,6 +85,8 @@ export function EnrollmentsTable() {
           <i className="fas fa-chart-simple"></i> Cargar progreso de todos
         </button>
       </div>
+
+      <EvolmindAccessBox defaultEmail="fernando@gsasellers.com" />
 
       <div className="admin-stats">
         <div className="stat-box">
@@ -202,6 +205,25 @@ function EnrollmentRow({ e }: { e: AdminEnrollment }) {
     }
   }
 
+  const [accessing, setAccessing] = useState(false);
+
+  async function enterAsStudent() {
+    setAccessing(true);
+    setNote(null);
+    try {
+      const res = await fetch(
+        `/api/admin/evolmind-access?email=${encodeURIComponent(e.email)}`
+      );
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "Error");
+      window.open(data.url, "_blank", "noopener");
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : "Error");
+    } finally {
+      setAccessing(false);
+    }
+  }
+
   const pct = progress?.completedPercent ?? null;
 
   return (
@@ -245,9 +267,20 @@ function EnrollmentRow({ e }: { e: AdminEnrollment }) {
       </td>
       <td>
         {e.evolmindSynced && (
-          <button className="link-btn" onClick={extend} disabled={extending}>
-            {extending ? "..." : note || "Ampliar"}
-          </button>
+          <div className="row-actions">
+            <button
+              className="link-btn"
+              onClick={enterAsStudent}
+              disabled={accessing}
+              title="Abrir evolCampus como este alumno"
+            >
+              {accessing ? "..." : "Entrar"}
+            </button>
+            <button className="link-btn" onClick={extend} disabled={extending}>
+              {extending ? "..." : "Ampliar"}
+            </button>
+            {note && <span className="row-note">{note}</span>}
+          </div>
         )}
       </td>
     </tr>

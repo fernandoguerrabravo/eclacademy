@@ -12,16 +12,24 @@
  *   EVOLMIND_API_KEY    clave única de cliente
  */
 
-const BASE_URL =
-  process.env.EVOLMIND_API_URL || "https://api.evolcampus.com/api";
-const CLIENT_ID = process.env.EVOLMIND_CLIENT_ID;
-const API_KEY = process.env.EVOLMIND_API_KEY;
+// Las credenciales se leen de forma PEREZOSA (en cada llamada) y no al importar
+// el módulo. Así funcionan también los scripts CLI que cargan .env con dotenv
+// después de que se resuelven los imports (los imports ESM se elevan/hoisting).
+function baseUrl(): string {
+  return process.env.EVOLMIND_API_URL || "https://api.evolcampus.com/api";
+}
+function clientId(): string | undefined {
+  return process.env.EVOLMIND_CLIENT_ID;
+}
+function apiKey(): string | undefined {
+  return process.env.EVOLMIND_API_KEY;
+}
 
 const TIMEOUT_MS = 15000;
 const MAX_RETRIES = 2;
 
 export function isEvolmindConfigured(): boolean {
-  return Boolean(CLIENT_ID && API_KEY);
+  return Boolean(clientId() && apiKey());
 }
 
 // ---------- Token (JWT) con cache en memoria ----------
@@ -57,10 +65,10 @@ async function getToken(): Promise<string> {
     return cachedToken.value;
   }
 
-  const res = await fetchWithTimeout(`${BASE_URL}/v1/token`, {
+  const res = await fetchWithTimeout(`${baseUrl()}/v1/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ clientid: Number(CLIENT_ID), key: API_KEY }),
+    body: JSON.stringify({ clientid: Number(clientId()), key: apiKey() }),
   });
 
   if (!res.ok) {
@@ -93,7 +101,7 @@ async function apiPostForm(
   let lastError = "";
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}${path}`, {
+      const res = await fetchWithTimeout(`${baseUrl()}${path}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -129,7 +137,7 @@ async function apiPostForm(
 
 async function apiGet(path: string): Promise<any> {
   const token = await getToken();
-  const res = await fetchWithTimeout(`${BASE_URL}${path}`, {
+  const res = await fetchWithTimeout(`${baseUrl()}${path}`, {
     method: "GET",
     headers: { Authorization: `Bearer ${token}` },
   });
