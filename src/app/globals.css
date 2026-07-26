@@ -2442,6 +2442,34 @@ body {
   color: var(--amazon-orange);
 }
 
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.admin-header-btn {
+  background: rgba(255, 153, 0, 0.12);
+  border: 1px solid var(--amazon-orange);
+  color: var(--amazon-orange);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-header-btn:hover:not(:disabled) {
+  background: var(--amazon-orange);
+  color: var(--white);
+}
+
+.admin-header-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* ===== ADMIN COURSE EDITOR ===== */
 .admin-back {
   color: var(--gray-500);

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { brand } from "@/lib/brand";
+import { EvolmindHeaderAccess } from "@/components/admin/EvolmindHeaderAccess";
 
 export default function AdminLayout({
   children,
@@ -14,9 +15,12 @@ export default function AdminLayout({
             <i className="fas fa-graduation-cap"></i>
             <span>{brand.namePrefix} <strong>Admin</strong></span>
           </Link>
-          <Link href="/" className="admin-header-link">
-            <i className="fas fa-arrow-up-right-from-square"></i> Ver sitio
-          </Link>
+          <div className="admin-header-actions">
+            <EvolmindHeaderAccess />
+            <Link href="/" className="admin-header-link">
+              <i className="fas fa-arrow-up-right-from-square"></i> Ver sitio
+            </Link>
+          </div>
         </div>
       </header>
       <main>{children}</main>
