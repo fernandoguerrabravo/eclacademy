@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { brand, brandTitle } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "ECL Academy | Ecommerce Logistics LLC - Tu Puerta al Mercado de EE.UU.",
-  description:
-    "Talleres especializados para sellers de Amazon en Latinoamérica. Cumplimiento aduanero, FDA, USDA, logística, fintech y comercio internacional.",
+  title: brandTitle,
+  description: brand.description,
 };
 
 export default function RootLayout({

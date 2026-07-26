@@ -4,6 +4,7 @@ import { getStoreCourses } from "@/lib/courses-db";
 import { getStoreBundles } from "@/lib/bundles-db";
 import { CourseCard } from "@/components/CourseCard";
 import { Footer } from "@/components/Footer";
+import { brand } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +24,13 @@ const testimonials = [
     initials: "MG",
     name: "María González",
     country: "Seller desde Colombia",
-    text: "Gracias a ECL Academy logré entender todo el proceso aduanero. En 3 meses ya tenía mis productos en los warehouses de Amazon USA.",
+    text: `Gracias a ${brand.name} logré entender todo el proceso aduanero. En 3 meses ya tenía mis productos en los warehouses de Amazon USA.`,
   },
   {
     initials: "CR",
     name: "Carlos Ramírez",
     country: "Seller desde México",
-    text: "El curso de FDA fue clave para mi marca de suplementos. Sin ECL Academy, habría cometido errores costosos en el registro.",
+    text: `El curso de FDA fue clave para mi marca de suplementos. Sin ${brand.name}, habría cometido errores costosos en el registro.`,
   },
   {
     initials: "AP",
@@ -70,8 +71,8 @@ export default async function HomePage() {
           <div className="partners-logos">
             <div className="partner-item">
               <Image
-                src="/logoecl.png"
-                alt="Ecommerce Logistics LLC"
+                src={brand.logo}
+                alt={brand.company}
                 width={140}
                 height={40}
                 className="partner-logo"
@@ -80,7 +81,7 @@ export default async function HomePage() {
             </div>
             <div className="partner-item">
               <Image
-                src="/spn-logo.jpeg"
+                src={brand.partnerLogo}
                 alt="Amazon Service Partner Network"
                 width={40}
                 height={40}
@@ -237,8 +238,8 @@ export default async function HomePage() {
             <div className="agency-logos">
               <div className="agency-logo-card">
                 <Image
-                  src="/logoecl.png"
-                  alt="Ecommerce Logistics LLC"
+                  src={brand.logo}
+                  alt={brand.company}
                   width={280}
                   height={80}
                   className="agency-logo ecl-logo"
@@ -247,7 +248,7 @@ export default async function HomePage() {
               </div>
               <div className="agency-logo-card">
                 <Image
-                  src="/spn-logo.jpeg"
+                  src={brand.partnerLogo}
                   alt="Amazon Seller Central Partner Network"
                   width={160}
                   height={160}
@@ -261,7 +262,7 @@ export default async function HomePage() {
                 Somos <span className="text-amazon">Amazon</span> Service Partner
               </h2>
               <p>
-                Ecommerce Logistics LLC es miembro oficial del{" "}
+                {brand.company} es miembro oficial del{" "}
                 <strong>Amazon Seller Central Partner Network</strong>. Nuestra
                 certificación garantiza que recibes formación avalada por los
                 más altos estándares de Amazon para sellers internacionales.

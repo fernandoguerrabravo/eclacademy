@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { brand } from "@/lib/brand";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function AdminLoginPage() {
       <div className="auth-card">
         <div className="auth-logo">
           <i className="fas fa-lock"></i>
-          <span>ECL <strong>Admin</strong></span>
+          <span>{brand.namePrefix} <strong>Admin</strong></span>
         </div>
         <h1>Panel de administración</h1>
         <p className="auth-sub">Introduce el token de administrador</p>

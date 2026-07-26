@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 
 export function Footer() {
   return (
@@ -9,13 +10,11 @@ export function Footer() {
             <div className="logo footer-logo">
               <i className="fas fa-graduation-cap"></i>
               <span>
-                ECL <strong>Academy</strong>
+                {brand.namePrefix} <strong>{brand.nameHighlight}</strong>
               </span>
             </div>
             <p>
-              Ecommerce Logistics LLC - Educación especializada para sellers de
-              Amazon en Latinoamérica que buscan expandirse al mercado de
-              Estados Unidos.
+              {brand.company} - {brand.shortDescription}
             </p>
           </div>
           <div className="footer-links">
@@ -49,12 +48,12 @@ export function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>&copy; 2026 Ecommerce Logistics LLC. Todos los derechos reservados.</p>
+          <p>&copy; {brand.year} {brand.company}. Todos los derechos reservados.</p>
           <div className="footer-social">
-            <a href="#" aria-label="Facebook"><i className="fab fa-facebook"></i></a>
-            <a href="#" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-            <a href="#" aria-label="LinkedIn"><i className="fab fa-linkedin"></i></a>
-            <a href="#" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
+            <a href={brand.social.facebook} aria-label="Facebook"><i className="fab fa-facebook"></i></a>
+            <a href={brand.social.instagram} aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+            <a href={brand.social.linkedin} aria-label="LinkedIn"><i className="fab fa-linkedin"></i></a>
+            <a href={brand.social.youtube} aria-label="YouTube"><i className="fab fa-youtube"></i></a>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getStoreBundleBySlug } from "@/lib/bundles-db";
 import { BundleBuyButton } from "@/components/BundleBuyButton";
 import { Footer } from "@/components/Footer";
+import { brand } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export async function generateMetadata({
 }) {
   const bundle = await getStoreBundleBySlug(params.slug);
   return {
-    title: bundle ? `${bundle.title} | ECL Academy` : "Paquete | ECL Academy",
+    title: bundle ? `${bundle.title} | ${brand.name}` : `Paquete | ${brand.name}`,
     description: bundle?.shortDescription,
   };
 }

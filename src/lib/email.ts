@@ -8,10 +8,12 @@
  *   NEXT_PUBLIC_SITE_URL  URL base del sitio
  */
 
+import { brand } from "@/lib/brand";
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM =
-  process.env.EMAIL_FROM || "ECL Academy <onboarding@resend.dev>";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  process.env.EMAIL_FROM || `${brand.name} <onboarding@resend.dev>`;
+const SITE_URL = brand.siteUrl;
 
 export function isEmailConfigured(): boolean {
   return Boolean(RESEND_API_KEY);
@@ -78,9 +80,9 @@ function extractLinks(html: string): string[] {
 // ============================================================
 
 const COLORS = {
-  dark: "#232f3e",
-  darker: "#131921",
-  orange: "#ff9900",
+  dark: brand.colors.dark,
+  darker: brand.colors.darker,
+  orange: brand.colors.primary,
   text: "#1c1d1f",
   muted: "#6a6f73",
   border: "#e4e8eb",
@@ -104,7 +106,7 @@ function layout(content: string, preview = ""): string {
               <span style="display:inline-block;width:38px;height:38px;background:#ffffff;border-radius:50%;text-align:center;line-height:38px;font-size:20px;">&#127891;</span>
             </td>
             <td style="vertical-align:middle;padding-left:10px;">
-              <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.3px;">ECL <span style="color:${COLORS.orange};">Academy</span></span>
+              <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.3px;">${brand.namePrefix} <span style="color:${COLORS.orange};">${brand.nameHighlight}</span></span>
             </td>
             <td style="vertical-align:middle;text-align:right;">
               <span style="color:#c9ced3;font-size:11px;">Amazon Service Partner</span>
@@ -116,13 +118,13 @@ function layout(content: string, preview = ""): string {
         <!-- Footer -->
         <tr><td style="background:${COLORS.darker};padding:22px 32px;">
           <p style="margin:0;color:#c9ced3;font-size:12px;line-height:1.6;">
-            <strong style="color:#fff;">Ecommerce Logistics LLC</strong><br>
-            Educación para sellers de Amazon en Latinoamérica · Miami, FL, USA<br>
-            <a href="${SITE_URL}" style="color:${COLORS.orange};text-decoration:none;">eclacademy.io</a>
+            <strong style="color:#fff;">${brand.company}</strong><br>
+            ${brand.shortDescription} · ${brand.city}<br>
+            <a href="${SITE_URL}" style="color:${COLORS.orange};text-decoration:none;">${brand.domain}</a>
           </p>
         </td></tr>
       </table>
-      <p style="color:${COLORS.muted};font-size:11px;margin:16px 0 0;">© 2026 Ecommerce Logistics LLC. Todos los derechos reservados.</p>
+      <p style="color:${COLORS.muted};font-size:11px;margin:16px 0 0;">© ${brand.year} ${brand.company}. Todos los derechos reservados.</p>
     </td></tr>
   </table>
 </body>
@@ -192,7 +194,7 @@ export function magicLinkEmail(params: {
 }): { subject: string; html: string } {
   const firstName = params.name.split(" ")[0];
   const content = `
-    <h1 style="font-size:20px;margin:0 0 8px;">Tu acceso a ECL Academy</h1>
+    <h1 style="font-size:20px;margin:0 0 8px;">Tu acceso a ${brand.name}</h1>
     <p style="font-size:15px;line-height:1.6;margin:0;">
       Hola ${firstName}, entra a tu cuenta con este enlace seguro (no necesitas contraseña):
     </p>
@@ -202,8 +204,8 @@ export function magicLinkEmail(params: {
     </p>
   `;
   return {
-    subject: "Tu enlace de acceso a ECL Academy",
-    html: layout(content, "Tu enlace de acceso a ECL Academy"),
+    subject: `Tu enlace de acceso a ${brand.name}`,
+    html: layout(content, `Tu enlace de acceso a ${brand.name}`),
   };
 }
 
@@ -227,7 +229,7 @@ export function refundEmail(params: {
     <p style="font-size:13px;color:${COLORS.muted};margin:20px 0 0;">Si tienes dudas, responde a este correo.</p>
   `;
   return {
-    subject: "Tu reembolso en ECL Academy",
+    subject: `Tu reembolso en ${brand.name}`,
     html: layout(content, "Hemos procesado tu reembolso."),
   };
 }

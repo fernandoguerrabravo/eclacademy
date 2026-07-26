@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 
 export default function AdminLayout({
   children,
@@ -11,7 +12,7 @@ export default function AdminLayout({
         <div className="admin-header-inner">
           <Link href="/admin" className="admin-brand">
             <i className="fas fa-graduation-cap"></i>
-            <span>ECL <strong>Admin</strong></span>
+            <span>{brand.namePrefix} <strong>Admin</strong></span>
           </Link>
           <Link href="/" className="admin-header-link">
             <i className="fas fa-arrow-up-right-from-square"></i> Ver sitio

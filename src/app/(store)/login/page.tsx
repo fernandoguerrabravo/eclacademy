@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -33,7 +34,7 @@ export default function LoginPage() {
       <div className="auth-card">
         <div className="auth-logo">
           <i className="fas fa-graduation-cap"></i>
-          <span>ECL <strong>Academy</strong></span>
+          <span>{brand.namePrefix} <strong>{brand.nameHighlight}</strong></span>
         </div>
 
         {sent ? (

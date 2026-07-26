@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { brand } from "@/lib/brand";
 
 export function Navbar() {
   const { count, openCart } = useCart();
@@ -24,7 +25,7 @@ export function Navbar() {
             <Link href="/" className="logo">
               <i className="fas fa-graduation-cap"></i>
               <span>
-                ECL <strong>Academy</strong>
+                {brand.namePrefix} <strong>{brand.nameHighlight}</strong>
               </span>
             </Link>
             <div className="nav-categories">

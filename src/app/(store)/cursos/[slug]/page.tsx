@@ -4,6 +4,7 @@ import Image from "next/image";
 import { getStoreCourseBySlug } from "@/lib/courses-db";
 import { PurchaseCard } from "@/components/PurchaseCard";
 import { Footer } from "@/components/Footer";
+import { brand } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export async function generateMetadata({
 }) {
   const course = await getStoreCourseBySlug(params.slug);
   return {
-    title: course ? `${course.title} | ECL Academy` : "Curso | ECL Academy",
+    title: course ? `${course.title} | ${brand.name}` : `Curso | ${brand.name}`,
     description: course?.shortDescription,
   };
 }
@@ -66,18 +67,18 @@ export default async function CourseDetailPage({
                   <span className="meta-sep">•</span>
                 </>
               )}
-              <span>Impartido por Ecommerce Logistics LLC</span>
+              <span>Impartido por {brand.company}</span>
             </div>
             <div className="course-header-instructor">
               <Image
-                src="/logoecl.png"
-                alt="ECL"
+                src={brand.logo}
+                alt={brand.name}
                 width={28}
                 height={28}
                 className="instructor-avatar"
               />
               <span>
-                Creado por <strong>Ecommerce Logistics LLC</strong>
+                Creado por <strong>{brand.company}</strong>
               </span>
             </div>
             <div className="course-header-tags">
@@ -165,21 +166,21 @@ export default async function CourseDetailPage({
             <div className="instructor-card">
               <div className="instructor-info">
                 <Image
-                  src="/logoecl.png"
-                  alt="Ecommerce Logistics LLC"
+                  src={brand.logo}
+                  alt={brand.company}
                   width={60}
                   height={60}
                   className="instructor-img"
                 />
                 <div>
-                  <h3>Ecommerce Logistics LLC</h3>
+                  <h3>{brand.company}</h3>
                   <p className="instructor-title">
                     Amazon Service Partner | Expertos en Comercio Internacional
                   </p>
                 </div>
               </div>
               <p className="instructor-bio">
-                Ecommerce Logistics LLC es una agencia oficial de Amazon (Service
+                {brand.company} es una agencia oficial de Amazon (Service
                 Partner Network) especializada en ayudar a sellers de
                 Latinoamérica a ingresar exitosamente al mercado de Estados
                 Unidos. Con presencia en Miami, Florida, nuestro equipo de

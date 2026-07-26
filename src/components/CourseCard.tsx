@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import type { StoreCourse } from "@/lib/courses-db";
+import { brand } from "@/lib/brand";
 
 const badgeLabels: Record<string, string> = {
   bestseller: "Más Vendido",
@@ -34,7 +35,7 @@ export function CourseCard({ course }: { course: StoreCourse }) {
       </div>
       <div className="course-body">
         <h3>{course.title}</h3>
-        <p className="course-instructor">Por Ecommerce Logistics LLC</p>
+        <p className="course-instructor">Por {brand.company}</p>
         <div className="course-rating">
           <span className="rating-number">{course.rating}</span>
           <div className="stars">
