@@ -33,22 +33,22 @@ export function Navbar() {
                 Categorías <i className="fas fa-chevron-down"></i>
               </button>
               <div className="categories-dropdown">
-                <Link href="/cursos/cumplimiento-aduanero">
+                <Link href="/#cursos">
                   <i className="fas fa-ship"></i> Cumplimiento Aduanero
                 </Link>
-                <Link href="/cursos/regulaciones-fda">
+                <Link href="/#cursos">
                   <i className="fas fa-flask"></i> Regulaciones FDA
                 </Link>
-                <Link href="/cursos/cumplimiento-usda">
+                <Link href="/#cursos">
                   <i className="fas fa-seedling"></i> Cumplimiento USDA
                 </Link>
-                <Link href="/cursos/logistica-internacional-fba">
+                <Link href="/#cursos">
                   <i className="fas fa-truck-fast"></i> Logística Internacional
                 </Link>
-                <Link href="/cursos/gestion-fintech">
+                <Link href="/#cursos">
                   <i className="fas fa-coins"></i> Gestión Fintech
                 </Link>
-                <Link href="/cursos/tratados-libre-comercio">
+                <Link href="/#cursos">
                   <i className="fas fa-file-contract"></i> Tratados de Libre
                   Comercio
                 </Link>

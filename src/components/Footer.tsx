@@ -20,12 +20,12 @@ export function Footer() {
           <div className="footer-links">
             <h4>Cursos</h4>
             <ul>
-              <li><Link href="/cursos/cumplimiento-aduanero">Cumplimiento Aduanero</Link></li>
-              <li><Link href="/cursos/regulaciones-fda">Regulaciones FDA</Link></li>
-              <li><Link href="/cursos/gestion-fintech">Gestión Fintech</Link></li>
-              <li><Link href="/cursos/logistica-internacional-fba">Logística Internacional</Link></li>
-              <li><Link href="/cursos/cumplimiento-usda">Cumplimiento USDA</Link></li>
-              <li><Link href="/cursos/tratados-libre-comercio">Tratados Comerciales</Link></li>
+              <li><Link href="/#cursos">Cumplimiento Aduanero</Link></li>
+              <li><Link href="/#cursos">Regulaciones FDA</Link></li>
+              <li><Link href="/#cursos">Gestión Fintech</Link></li>
+              <li><Link href="/#cursos">Logística Internacional</Link></li>
+              <li><Link href="/#cursos">Cumplimiento USDA</Link></li>
+              <li><Link href="/#cursos">Tratados Comerciales</Link></li>
             </ul>
           </div>
           <div className="footer-links">
