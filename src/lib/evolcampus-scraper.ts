@@ -142,6 +142,17 @@ export function isScraperConfigured(cfg: ScraperConfig): boolean {
   return Boolean(cfg.adminUrl && cfg.user && cfg.pass);
 }
 
+/** Devuelve un mensaje diagnóstico con las variables que faltan para el scraper. */
+export function scraperMissingVarsMessage(): string {
+  const missing: string[] = [];
+  if (!process.env.EVOLCAMPUS_ADMIN_EMAIL) missing.push("EVOLCAMPUS_ADMIN_EMAIL");
+  if (!process.env.EVOLMIND_CLIENT_ID) missing.push("EVOLMIND_CLIENT_ID");
+  if (!process.env.EVOLMIND_API_KEY) missing.push("EVOLMIND_API_KEY");
+  if (missing.length === 0) return "";
+  return `Scraper no configurado. Variables faltantes: ${missing.join(", ")}. ` +
+    (process.env.BROWSERLESS_URL ? "" : "Producción: también falta BROWSERLESS_URL. ");
+}
+
 /**
  * Obtiene una URL de autologin al panel de evolCampus para el usuario admin.
  * Resuelve el email -> userId (verifyEmail) y luego getUrlAutologin.
@@ -334,7 +345,7 @@ export async function addCourseSubjectsViaScraper(
     return {
       success: false,
       message:
-        "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL.",
+        scraperMissingVarsMessage() || "Scraper no configurado.",
     };
   }
   const clean = subjects.map((s) => s.trim()).filter(Boolean);
@@ -391,7 +402,7 @@ export async function archiveCourseSubjectViaScraper(
 ): Promise<{ success: boolean; message: string }> {
   const cfg = scraperConfigFromEnv(configOverrides);
   if (!isScraperConfigured(cfg)) {
-    return { success: false, message: "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL." };
+    return { success: false, message: scraperMissingVarsMessage() || "Scraper no configurado." };
   }
   let browser: Browser | null = null;
   try {
@@ -517,7 +528,7 @@ export async function deleteCourseSubjectViaScraper(
 ): Promise<{ success: boolean; message: string }> {
   const cfg = scraperConfigFromEnv(configOverrides);
   if (!isScraperConfigured(cfg)) {
-    return { success: false, message: "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL." };
+    return { success: false, message: scraperMissingVarsMessage() || "Scraper no configurado." };
   }
   let browser: Browser | null = null;
   try {
@@ -653,7 +664,7 @@ export async function renameCourseSubjectViaScraper(
 ): Promise<{ success: boolean; message: string }> {
   const cfg = scraperConfigFromEnv(configOverrides);
   if (!isScraperConfigured(cfg)) {
-    return { success: false, message: "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL." };
+    return { success: false, message: scraperMissingVarsMessage() || "Scraper no configurado." };
   }
   const name = newName.trim();
   if (!name) return { success: false, message: "El nuevo nombre está vacío" };
@@ -772,7 +783,7 @@ export async function createCourseViaScraper(
     return {
       success: false,
       message:
-        "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL.",
+        scraperMissingVarsMessage() || "Scraper no configurado.",
     };
   }
 
