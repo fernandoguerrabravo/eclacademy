@@ -17,6 +17,21 @@ export function PurchaseCard({ course }: { course: StoreCourse }) {
     addItem(course.id);
   }
 
+  /** Convierte una URL de YouTube/Vimeo en su URL de embed. */
+  function getEmbedUrl(url: string): string | null {
+    // YouTube: watch?v=ID, youtu.be/ID, shorts/ID
+    const ytMatch = url.match(
+      /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]+)/
+    );
+    if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+    // Vimeo: vimeo.com/ID
+    const vmMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vmMatch) return `https://player.vimeo.com/video/${vmMatch[1]}`;
+    return null;
+  }
+
+  const embedUrl = course.videoUrl ? getEmbedUrl(course.videoUrl) : null;
+
   async function handleBuyNow() {
     setLoading(true);
     setError(null);
@@ -39,13 +54,27 @@ export function PurchaseCard({ course }: { course: StoreCourse }) {
   return (
     <div className="purchase-card">
       <div className="purchase-preview">
-        <div className="preview-thumb">
-          <i className={`fas ${course.icon}`}></i>
-          <button className="play-btn" aria-label="Vista previa del curso">
-            <i className="fas fa-play"></i>
-          </button>
-        </div>
-        <p className="preview-text">Vista previa de este curso</p>
+        {embedUrl ? (
+          <div className="preview-video">
+            <iframe
+              src={embedUrl}
+              title="Video de presentación"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ width: "100%", height: "200px", border: "none" }}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="preview-thumb">
+              <i className={`fas ${course.icon}`}></i>
+              <button className="play-btn" aria-label="Vista previa del curso">
+                <i className="fas fa-play"></i>
+              </button>
+            </div>
+            <p className="preview-text">Vista previa de este curso</p>
+          </>
+        )}
       </div>
       <div className="purchase-body">
         <div className="purchase-price">

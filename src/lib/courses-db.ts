@@ -22,6 +22,7 @@ export interface StoreCourse {
   whatYouLearn: string[];
   requirements: string[];
   audience: string[];
+  videoUrl: string | null;
 }
 
 /**
@@ -64,6 +65,7 @@ function toStoreCourse(c: PrismaCourse): StoreCourse {
     whatYouLearn: c.whatYouLearn ?? [],
     requirements: c.requirements ?? [],
     audience: c.audience ?? [],
+    videoUrl: c.videoUrl ?? null,
   };
 }
 

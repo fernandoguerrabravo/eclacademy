@@ -101,6 +101,7 @@ export async function PATCH(req: NextRequest) {
     if (body.weeks !== undefined) data.weeks = Number(body.weeks);
     if (body.lessons !== undefined) data.lessons = Number(body.lessons);
     if (body.published !== undefined) data.published = Boolean(body.published);
+    if (body.videoUrl !== undefined) data.videoUrl = body.videoUrl || null;
 
     // Grupo de matrícula (elegir entre los grupos existentes en evolCampus)
     if (body.evolmindGroupId !== undefined) {

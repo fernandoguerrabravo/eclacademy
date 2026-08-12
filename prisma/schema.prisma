@@ -57,6 +57,7 @@ model Course {
   evolmindError    String?
   subjects         Json? // asignaturas del curso en evolCampus (sincronizado, solo lectura)
   curriculum       Json? // temario gestionado en NUESTRO admin (editable). Si existe, se muestra en la tienda en vez de subjects.
+  videoUrl         String? // URL de video de presentación (YouTube, Vimeo, etc.)
   // ----- Comercio / presentación (gestionado en nuestra plataforma) -----
   whatYouLearn     String[] @default([]) // "Lo que aprenderás"
   requirements     String[] @default([]) // requisitos

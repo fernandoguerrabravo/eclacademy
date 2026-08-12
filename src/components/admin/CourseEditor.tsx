@@ -27,6 +27,7 @@ interface FullCourse {
   evolmindGroupId: number | null;
   subjects: { subjectid: number | string; subject: string }[];
   curriculum: string[] | null;
+  videoUrl: string | null;
 }
 
 export function CourseEditor({ courseId }: { courseId: number }) {
@@ -90,6 +91,7 @@ export function CourseEditor({ courseId }: { courseId: number }) {
           requirements: c.requirements,
           audience: c.audience,
           published: c.published,
+          videoUrl: c.videoUrl || null,
         }),
       });
       const data = await res.json();
@@ -211,6 +213,20 @@ export function CourseEditor({ courseId }: { courseId: number }) {
             evolCampus: curso {c.evolmindCourseId ?? "—"} / grupo{" "}
             {c.evolmindGroupId ?? "—"}
           </p>
+        </section>
+
+        <section className="admin-section">
+          <h2>Video de presentación</h2>
+          <p className="admin-muted">Link de YouTube o Vimeo. Se mostrará en la ficha del curso.</p>
+          <div className="editor-field">
+            <label>URL del video</label>
+            <input
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={c.videoUrl || ""}
+              onChange={(e) => set("videoUrl", e.target.value || null)}
+            />
+          </div>
         </section>
 
         <section className="admin-section">
