@@ -64,6 +64,16 @@ export function PurchaseCard({ course }: { course: StoreCourse }) {
               style={{ width: "100%", height: "200px", border: "none" }}
             />
           </div>
+        ) : course.videoUrl ? (
+          <div className="preview-video">
+            <video
+              src={course.videoUrl}
+              controls
+              playsInline
+              preload="metadata"
+              style={{ width: "100%", height: "200px", objectFit: "cover", background: "#000" }}
+            />
+          </div>
         ) : (
           <>
             <div className="preview-thumb">
