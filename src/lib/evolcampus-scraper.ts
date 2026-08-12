@@ -17,7 +17,7 @@
  * Autorización: solo la propia cuenta del cliente. Revisar ToS de evolCampus.
  */
 
-import { chromium, Browser, Page } from "playwright";
+import { chromium, Browser, Page, BrowserContext } from "playwright";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import {
@@ -25,6 +25,29 @@ import {
   getAutologinUrl,
   getEvolmindCourses,
 } from "./evolmind";
+
+// ============================================================
+// Helper: conectar a Browserless (remoto) o lanzar Chromium local
+// ============================================================
+
+/**
+ * Si BROWSERLESS_URL está definida, conecta al navegador remoto via WebSocket
+ * (compatible con Browserless.io, chrome-as-a-service, etc.).
+ * Si no, lanza Chromium local.
+ *
+ * Variable de entorno:
+ *   BROWSERLESS_URL=wss://chrome.browserless.io?token=TU_TOKEN
+ *   (o la URL de tu propia instancia de Browserless)
+ */
+async function launchBrowser(headless = true): Promise<Browser> {
+  const wsUrl = process.env.BROWSERLESS_URL;
+  if (wsUrl) {
+    // Conexión remota via WebSocket (Browserless / CDP)
+    return chromium.connectOverCDP(wsUrl);
+  }
+  // Chromium local
+  return chromium.launch({ headless });
+}
 
 export interface EvolSelectors {
   login: { url?: string; userInput?: string; passInput?: string; submit?: string };
@@ -311,7 +334,7 @@ export async function addCourseSubjectsViaScraper(
     return {
       success: false,
       message:
-        "Scraper no configurado: define EVOLCAMPUS_ADMIN_EMAIL (autologin) en .env.local",
+        "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL.",
     };
   }
   const clean = subjects.map((s) => s.trim()).filter(Boolean);
@@ -321,7 +344,7 @@ export async function addCourseSubjectsViaScraper(
 
   let browser: Browser | null = null;
   try {
-    browser = await chromium.launch({ headless: cfg.headless });
+    browser = await launchBrowser(cfg.headless);
     const context = await browser.newContext({
       viewport: { width: 1440, height: 900 },
     });
@@ -368,11 +391,11 @@ export async function archiveCourseSubjectViaScraper(
 ): Promise<{ success: boolean; message: string }> {
   const cfg = scraperConfigFromEnv(configOverrides);
   if (!isScraperConfigured(cfg)) {
-    return { success: false, message: "Scraper no configurado (EVOLCAMPUS_ADMIN_EMAIL)" };
+    return { success: false, message: "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL." };
   }
   let browser: Browser | null = null;
   try {
-    browser = await chromium.launch({ headless: cfg.headless });
+    browser = await launchBrowser(cfg.headless);
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await context.addInitScript(
       "globalThis.__name = globalThis.__name || function (f) { return f; };"
@@ -494,11 +517,11 @@ export async function deleteCourseSubjectViaScraper(
 ): Promise<{ success: boolean; message: string }> {
   const cfg = scraperConfigFromEnv(configOverrides);
   if (!isScraperConfigured(cfg)) {
-    return { success: false, message: "Scraper no configurado (EVOLCAMPUS_ADMIN_EMAIL)" };
+    return { success: false, message: "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL." };
   }
   let browser: Browser | null = null;
   try {
-    browser = await chromium.launch({ headless: cfg.headless });
+    browser = await launchBrowser(cfg.headless);
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await context.addInitScript(
       "globalThis.__name = globalThis.__name || function (f) { return f; };"
@@ -630,7 +653,7 @@ export async function renameCourseSubjectViaScraper(
 ): Promise<{ success: boolean; message: string }> {
   const cfg = scraperConfigFromEnv(configOverrides);
   if (!isScraperConfigured(cfg)) {
-    return { success: false, message: "Scraper no configurado (EVOLCAMPUS_ADMIN_EMAIL)" };
+    return { success: false, message: "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL." };
   }
   const name = newName.trim();
   if (!name) return { success: false, message: "El nuevo nombre está vacío" };
@@ -654,7 +677,7 @@ export async function renameCourseSubjectViaScraper(
 
   let browser: Browser | null = null;
   try {
-    browser = await chromium.launch({ headless: cfg.headless });
+    browser = await launchBrowser(cfg.headless);
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await context.addInitScript(
       "globalThis.__name = globalThis.__name || function (f) { return f; };"
@@ -749,7 +772,7 @@ export async function createCourseViaScraper(
     return {
       success: false,
       message:
-        "Scraper no configurado: define EVOLCAMPUS_ADMIN_EMAIL (autologin) en .env.local",
+        "Scraper no configurado. Define EVOLCAMPUS_ADMIN_EMAIL (y EVOLMIND_*). En producción también BROWSERLESS_URL.",
     };
   }
 
@@ -760,7 +783,7 @@ export async function createCourseViaScraper(
 
   let browser: Browser | null = null;
   try {
-    browser = await chromium.launch({ headless: cfg.headless });
+    browser = await launchBrowser(cfg.headless);
     const context = await browser.newContext({
       viewport: { width: 1440, height: 900 },
     });

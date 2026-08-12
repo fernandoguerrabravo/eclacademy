@@ -51,6 +51,12 @@ services:
       - key: EVOLMIND_API_KEY
         scope: RUN_TIME
         type: SECRET
+      - key: EVOLCAMPUS_ADMIN_EMAIL
+        scope: RUN_TIME
+        value: fernando@gsasellers.com
+      - key: BROWSERLESS_URL
+        scope: RUN_TIME
+        type: SECRET
       - key: RESEND_API_KEY
         scope: RUN_TIME
         type: SECRET
