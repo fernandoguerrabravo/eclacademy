@@ -113,7 +113,7 @@ export default function CartPage() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <h4 style={{ fontSize: "0.95rem" }}>{item.title}</h4>
-                    <span style={{ fontWeight: 700 }}>${item.price}</span>
+                    <span style={{ fontWeight: 700 }}>${item.price} USD</span>
                   </div>
                   <button
                     className="cart-item-remove"
@@ -176,7 +176,7 @@ export default function CartPage() {
                 }}
               >
                 <span>Total:</span>
-                <span>${discounted}</span>
+                <span>${discounted} USD</span>
               </div>
               {error && (
                 <p style={{ color: "#b91c1c", fontSize: "0.8rem", marginBottom: 8 }}>

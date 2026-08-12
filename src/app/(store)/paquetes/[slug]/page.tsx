@@ -83,7 +83,7 @@ export default async function BundleDetailPage({
             </div>
             <div className="purchase-body">
               <div className="purchase-price">
-                <span className="price-main">${bundle.price}</span>
+                <span className="price-main">${bundle.price} <small>USD</small></span>
                 {bundle.originalPrice > bundle.price && (
                   <>
                     <span className="price-old">${bundle.originalPrice}</span>

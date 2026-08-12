@@ -49,7 +49,7 @@ export function PurchaseCard({ course }: { course: StoreCourse }) {
       </div>
       <div className="purchase-body">
         <div className="purchase-price">
-          <span className="price-main">${course.price}</span>
+          <span className="price-main">${course.price} <small>USD</small></span>
           <span className="price-old">${course.originalPrice}</span>
           <span className="price-discount">{discount}% dto.</span>
         </div>

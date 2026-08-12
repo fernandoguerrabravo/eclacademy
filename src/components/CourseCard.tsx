@@ -52,7 +52,7 @@ export function CourseCard({ course }: { course: StoreCourse }) {
           <span>Certificado</span>
         </div>
         <div className="course-price-row">
-          <span className="price-current">${course.price}</span>
+          <span className="price-current">${course.price} <small>USD</small></span>
           <span className="price-old">${course.originalPrice}</span>
         </div>
         <button className="btn-add-cart" onClick={handleAdd}>

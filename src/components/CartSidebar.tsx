@@ -40,7 +40,7 @@ export function CartSidebar() {
                 </div>
                 <div className="cart-item-info">
                   <h4>{item.title}</h4>
-                  <span>${item.price}</span>
+                  <span>${item.price} USD</span>
                 </div>
                 <button
                   className="cart-item-remove"
@@ -58,7 +58,7 @@ export function CartSidebar() {
           <div className="cart-footer">
             <div className="cart-total">
               <span>Total:</span>
-              <span>${total}</span>
+              <span>${total} USD</span>
             </div>
             <Link
               href="/carrito"

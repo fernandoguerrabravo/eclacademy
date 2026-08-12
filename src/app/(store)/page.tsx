@@ -151,7 +151,7 @@ export default async function HomePage() {
                       <i className="fas fa-book"></i> {b.courses.length} cursos incluidos
                     </div>
                     <div className="bundle-card-foot">
-                      <span className="price-current">${b.price}</span>
+                      <span className="price-current">${b.price} <small>USD</small></span>
                       {b.originalPrice > b.price && (
                         <span className="price-old">${b.originalPrice}</span>
                       )}
