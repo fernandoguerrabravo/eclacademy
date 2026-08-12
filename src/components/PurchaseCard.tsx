@@ -84,7 +84,7 @@ export function PurchaseCard({ course }: { course: StoreCourse }) {
             <li><i className="fas fa-play-circle"></i> {course.lessons} lecciones en video</li>
             <li><i className="fas fa-file-download"></i> Recursos descargables</li>
             <li><i className="fas fa-file-alt"></i> Ejercicios prácticos</li>
-            <li><i className="fas fa-infinity"></i> Acceso de por vida</li>
+            <li><i className="fas fa-infinity"></i> Acceso por {course.weeks} semanas</li>
             <li><i className="fas fa-mobile-alt"></i> Acceso en dispositivos móviles</li>
             <li><i className="fas fa-certificate"></i> Certificado de finalización</li>
             <li><i className="fas fa-users"></i> Comunidad privada de sellers</li>
